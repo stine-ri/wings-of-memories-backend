@@ -48,10 +48,6 @@ Thumbs.db
 .idea/
 *.swp
 
-# Optional: database / generated data
-drizzle/migrations/.snapshot
-*.sqlite
-*.db
 
 # Optional: package manager locks (if you only use one)
 # Uncomment the one you *don’t* use
