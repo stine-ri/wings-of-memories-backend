@@ -10,7 +10,7 @@ const app = new Hono();
 
 // CORS middleware 
 app.use('*', cors({
-  origin: ['http://localhost:5173', 'https://your-deployed-frontend.com'], 
+  origin: ['http://localhost:5173', 'https://wings-of-memory-frontend.vercel.app/'], 
   credentials: true,
 }));
 
