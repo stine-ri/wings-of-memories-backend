@@ -4,7 +4,7 @@ import { db } from '../drizzle/db.js';
 import { users } from '../drizzle/schema.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { eq } from 'drizzle-orm';
-import { sign } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 const auth = new Hono();
 
@@ -57,11 +57,11 @@ auth.post('/register', async (c) => {
       });
 
     // Generate JWT token
-    const token = sign(
-      { userId: user.id, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
-    );
+  const token = jwt.sign(
+  { userId: user.id, role: user.role },
+  process.env.JWT_SECRET!,
+  { expiresIn: '7d' }
+);
 
     return c.json({
       message: 'User registered successfully',
@@ -106,12 +106,11 @@ auth.post('/login', async (c) => {
     }
 
     // Generate JWT token
-    const token = sign(
-      { userId: user.id, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
-    );
-
+  const token = jwt.sign(
+  { userId: user.id, role: user.role },
+  process.env.JWT_SECRET!,
+  { expiresIn: '7d' }
+);
     return c.json({
       message: 'Login successful',
       token,

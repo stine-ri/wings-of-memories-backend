@@ -1,5 +1,7 @@
 import { createMiddleware } from 'hono/factory';
-import { verify } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
+
+const { verify } = jwt; // ✅ Destructure verify from jwt
 
 export interface AuthVariables {
   userId: string;
@@ -9,7 +11,7 @@ export interface AuthVariables {
 export const authMiddleware = createMiddleware<{ Variables: AuthVariables }>(
   async (c, next) => {
     const authHeader = c.req.header('Authorization');
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return c.json({ error: 'No token provided' }, 401);
     }
@@ -21,9 +23,10 @@ export const authMiddleware = createMiddleware<{ Variables: AuthVariables }>(
         userId: string;
         role: string;
       };
-      
+
       c.set('userId', decoded.userId);
       c.set('userRole', decoded.role);
+
       await next();
     } catch (error) {
       return c.json({ error: 'Invalid token' }, 401);
