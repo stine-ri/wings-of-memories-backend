@@ -9,10 +9,15 @@ import { rsvpsApp } from './routes/rsvps.js';
 const app = new Hono();
 
 // CORS middleware 
+app.use('*', async (c, next) => {
+  console.log('CORS Middleware - Origin:', c.req.header('Origin'));
+  await next();
+});
+
 app.use('*', cors({
   origin: [
     'http://localhost:5173',
-    'https://wings-of-memory-frontend.vercel.app' // ✅ no trailing slash
+    'https://wings-of-memory-frontend.vercel.app'
   ],
   credentials: true,
 }));
