@@ -1,4 +1,4 @@
-// backend/utils/pdfTemplate.ts - COMPLETE VERSION WITH ALL SECTIONS
+// backend/utils/pdfTemplate.ts - PREMIUM MEMORIAL BOOKLET DESIGN
 export function generateMemorialHTML(memorialData: any): string {
   const {
     name = 'Memorial',
@@ -15,15 +15,30 @@ export function generateMemorialHTML(memorialData: any): string {
     service = {}
   } = memorialData;
 
+  // Format dates nicely
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${name} - Memorial</title>
+  <title>In Loving Memory of ${name}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
     
     * {
       margin: 0;
@@ -33,19 +48,29 @@ export function generateMemorialHTML(memorialData: any): string {
     
     @page {
       size: A4;
-      margin: 0.5cm;
+      margin: 1cm;
     }
     
     body {
       margin: 0;
       padding: 0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Crimson Text', serif;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
-      color-adjust: exact !important;
-      background-color: #ffffff;
+      background-color: #fefdf9;
       line-height: 1.6;
-      color: #374151;
+      color: #2d3748;
+      font-size: 14px;
+    }
+
+    /* Premium color scheme */
+    :root {
+      --primary: #8b7355;
+      --secondary: #d4b896;
+      --accent: #a52a2a;
+      --light: #faf7f2;
+      --dark: #2d3748;
+      --gold: #b8860b;
     }
 
     /* Page breaks and layout */
@@ -59,257 +84,333 @@ export function generateMemorialHTML(memorialData: any): string {
       break-inside: avoid;
     }
 
-    .no-break-before {
-      page-break-before: avoid;
+    .section-divider {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+      margin: 3rem 0;
+      opacity: 0.3;
     }
 
-    /* HEADER SECTION */
-    .header-section {
-      background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 50%, #fdba74 100%);
-      min-height: 70vh;
+    /* COVER PAGE - Elegant memorial cover */
+    .cover-page {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #faf7f2 0%, #e8e0d5 100%);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 3rem 2rem;
       text-align: center;
+      padding: 4rem 2rem;
       position: relative;
       overflow: hidden;
     }
 
-    .header-content {
-      max-width: 800px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 2;
-    }
-
-    .profile-container {
-      margin-bottom: 2.5rem;
-      display: flex;
-      justify-content: center;
-    }
-
-    .profile-image {
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 8px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
-    }
-
-    .profile-placeholder {
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-      border: 8px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .profile-icon {
-      width: 80px;
-      height: 80px;
-      color: #f59e0b;
-    }
-
-    .header-name {
-      font-size: 3.5rem;
-      font-weight: 800;
-      color: #1f2937;
-      margin-bottom: 1rem;
-      line-height: 1.1;
-    }
-
-    .header-dates {
-      font-size: 1.75rem;
-      color: #4b5563;
-      margin-bottom: 1rem;
-      font-weight: 500;
-    }
-
-    .header-location {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 1.25rem;
-      color: #6b7280;
-      background: rgba(255, 255, 255, 0.8);
-      padding: 0.75rem 1.5rem;
-      border-radius: 50px;
-    }
-
-    .location-icon {
-      width: 1.25rem;
-      height: 1.25rem;
-      color: #f59e0b;
-    }
-
-    /* SECTION STYLES */
-    .section-container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 4rem 2rem;
-    }
-
-    .section-card {
-      background: #ffffff;
-      border-radius: 1.5rem;
-      padding: 3rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-      border: 1px solid #f3f4f6;
-      position: relative;
-    }
-
-    .section-card::before {
+    .cover-page::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #f59e0b, #d97706);
-      border-radius: 1.5rem 1.5rem 0 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.03"><path d="M30,30 Q50,10 70,30 T90,50 T70,70 T50,90 T30,70 T10,50 T30,30 Z" fill="%238b7355"/></svg>');
+      background-size: 200px 200px;
+    }
+
+    .memorial-title {
+      font-family: 'Crimson Text', serif;
+      font-size: 1.2rem;
+      color: var(--primary);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      font-weight: 400;
+    }
+
+    .cover-name {
+      font-family: 'Crimson Text', serif;
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin: 2rem 0;
+      line-height: 1.1;
+      position: relative;
+    }
+
+    .cover-name::after {
+      content: '';
+      position: absolute;
+      bottom: -1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 2px;
+      background: var(--gold);
+    }
+
+    .cover-dates {
+      font-size: 1.4rem;
+      color: var(--primary);
+      font-style: italic;
+      margin-bottom: 1rem;
+    }
+
+    .cover-location {
+      font-size: 1.1rem;
+      color: #666;
+      margin-bottom: 3rem;
+    }
+
+    .cover-quote {
+      font-size: 1.1rem;
+      color: var(--primary);
+      font-style: italic;
+      max-width: 400px;
+      margin: 2rem auto 0;
+      line-height: 1.8;
+    }
+
+    /* CONTENT PAGES */
+    .content-page {
+      padding: 3rem 0;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
     }
 
     .section-title {
-      font-size: 2.25rem;
+      font-family: 'Crimson Text', serif;
+      font-size: 2.2rem;
       font-weight: 700;
-      color: #1f2937;
-      margin-bottom: 2.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 3px solid #fde68a;
+      color: var(--dark);
+      margin-bottom: 1rem;
+      position: relative;
+      display: inline-block;
+    }
+
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -0.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 2px;
+      background: var(--gold);
+    }
+
+    .section-subtitle {
+      font-size: 1.1rem;
+      color: var(--primary);
+      font-style: italic;
+    }
+
+    /* PROFILE SECTION */
+    .profile-section {
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .profile-image-container {
+      margin-bottom: 2rem;
+    }
+
+    .profile-image {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 8px solid white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .profile-placeholder {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--light), var(--secondary));
+      border: 8px solid white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    .profile-icon {
+      width: 80px;
+      height: 80px;
+      color: var(--primary);
+      opacity: 0.7;
+    }
+
+    .profile-name {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 1rem;
+    }
+
+    .profile-dates {
+      font-size: 1.3rem;
+      color: var(--primary);
+      font-style: italic;
+      margin-bottom: 1rem;
+    }
+
+    .profile-location {
+      font-size: 1.1rem;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
     }
 
     /* OBITUARY SECTION */
+    .obituary-section {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
     .obituary-content {
-      font-size: 1.125rem;
-      color: #4b5563;
+      font-size: 1.1rem;
       line-height: 1.8;
+      color: #444;
+      text-align: justify;
     }
 
     .obituary-content p {
       margin-bottom: 1.5rem;
+      text-indent: 2rem;
     }
 
     /* TIMELINE SECTION */
-    .timeline-container {
-      position: relative;
-      padding-left: 4rem;
+    .timeline-section {
+      max-width: 800px;
+      margin: 0 auto;
     }
 
-    .timeline-line {
+    .timeline {
+      position: relative;
+      padding-left: 3rem;
+    }
+
+    .timeline::before {
+      content: '';
       position: absolute;
-      left: 2.5rem;
+      left: 1.5rem;
       top: 0;
       bottom: 0;
-      width: 3px;
-      background: linear-gradient(to bottom, #f59e0b, #d97706);
+      width: 2px;
+      background: linear-gradient(to bottom, var(--secondary), var(--primary));
     }
 
     .timeline-item {
-      display: flex;
-      gap: 2rem;
-      margin-bottom: 2.5rem;
       position: relative;
+      margin-bottom: 2.5rem;
+      padding-left: 2rem;
     }
 
-    .timeline-year {
-      flex-shrink: 0;
-      width: 6rem;
-      background: linear-gradient(135deg, #f59e0b, #d97706);
+    .timeline-marker {
+      position: absolute;
+      left: -2.5rem;
+      top: 0;
+      width: 3rem;
+      height: 3rem;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: white;
-      padding: 0.75rem 1rem;
-      border-radius: 50px;
       font-weight: 700;
-      font-size: 0.875rem;
-      text-align: center;
-      box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
-      position: relative;
-      z-index: 10;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgba(139, 115, 85, 0.3);
     }
 
     .timeline-content {
-      flex: 1;
-      background: #fffbeb;
-      border-radius: 1rem;
+      background: white;
       padding: 2rem;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-      border: 1px solid #fde68a;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      border-left: 4px solid var(--gold);
+    }
+
+    .timeline-year {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
     }
 
     .timeline-title {
-      font-size: 1.375rem;
-      font-weight: 700;
-      color: #1f2937;
-      margin-bottom: 0.75rem;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 1rem;
     }
 
     .timeline-description {
-      color: #6b7280;
+      color: #555;
       line-height: 1.7;
       margin-bottom: 1rem;
     }
 
     .timeline-location {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: #9ca3af;
-      font-size: 0.875rem;
+      color: #777;
+      font-size: 0.95rem;
+      font-style: italic;
     }
 
     /* FAVORITES SECTION */
+    .favorites-section {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
     .favorites-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 1.5rem;
     }
 
-    .favorite-item {
-      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-      border-radius: 1rem;
+    .favorite-card {
+      background: white;
       padding: 2rem;
-      border: 1px solid #fde68a;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-
-    .favorite-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      border-top: 4px solid var(--gold);
+      text-align: center;
     }
 
     .favorite-icon {
-      width: 3.5rem;
-      height: 3.5rem;
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      flex-shrink: 0;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
     }
 
     .favorite-category {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #92400e;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 1rem;
       text-transform: capitalize;
     }
 
     .favorite-text {
-      color: #1f2937;
-      font-size: 1.0625rem;
+      color: #555;
       line-height: 1.6;
+      font-style: italic;
     }
 
-    /* FAMILY TREE SECTION */
+    /* FAMILY SECTION */
+    .family-section {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
     .family-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -317,61 +418,63 @@ export function generateMemorialHTML(memorialData: any): string {
     }
 
     .family-member {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
       display: flex;
       align-items: center;
-      gap: 1.25rem;
-      padding: 1.5rem;
-      background: #ffffff;
-      border-radius: 1rem;
-      border: 2px solid #fde68a;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      gap: 1rem;
     }
 
     .family-image {
-      width: 5rem;
-      height: 5rem;
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
       object-fit: cover;
-      border: 3px solid #fcd34d;
+      border: 3px solid var(--secondary);
     }
 
     .family-placeholder {
-      width: 5rem;
-      height: 5rem;
-      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
+      background: linear-gradient(135deg, var(--light), var(--secondary));
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 3px solid #fcd34d;
+      border: 3px solid var(--secondary);
     }
 
     .family-initials {
-      color: #d97706;
+      color: var(--primary);
       font-weight: 700;
-      font-size: 1.125rem;
+      font-size: 1.1rem;
     }
 
     .family-info {
       flex: 1;
-      min-width: 0;
     }
 
     .family-name {
-      font-weight: 700;
-      color: #1f2937;
-      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--dark);
+      font-size: 1.1rem;
       margin-bottom: 0.25rem;
     }
 
     .family-relation {
-      color: #d97706;
-      font-size: 0.9375rem;
-      font-weight: 600;
+      color: var(--primary);
+      font-size: 0.95rem;
       text-transform: capitalize;
     }
 
     /* GALLERY SECTION */
+    .gallery-section {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
     .gallery-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -380,10 +483,9 @@ export function generateMemorialHTML(memorialData: any): string {
 
     .gallery-item {
       aspect-ratio: 1;
-      border-radius: 0.75rem;
+      border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid #e5e7eb;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
     .gallery-image {
@@ -395,165 +497,109 @@ export function generateMemorialHTML(memorialData: any): string {
     .gallery-placeholder {
       width: 100%;
       height: 100%;
-      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      background: linear-gradient(135deg, var(--light), var(--secondary));
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .gallery-more {
-      text-align: center;
-      margin-top: 1.5rem;
-      color: #6b7280;
-      font-size: 0.9375rem;
+    /* MEMORIES SECTION */
+    .memories-section {
+      max-width: 700px;
+      margin: 0 auto;
     }
 
-    /* MEMORY WALL SECTION */
-    .memory-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    .memory-item {
-      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-      border-radius: 1rem;
+    .memory-card {
+      background: white;
       padding: 2rem;
-      border-left: 4px solid #f59e0b;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-
-    .memory-content {
-      display: flex;
-      gap: 1.25rem;
-    }
-
-    .memory-avatar {
-      flex-shrink: 0;
-      width: 3rem;
-      height: 3rem;
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      font-size: 1.125rem;
-    }
-
-    .memory-body {
-      flex: 1;
-      min-width: 0;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      margin-bottom: 1.5rem;
+      border-left: 4px solid var(--gold);
     }
 
     .memory-text {
-      color: #1f2937;
-      font-size: 1.0625rem;
+      font-size: 1.1rem;
       line-height: 1.7;
+      color: #444;
       font-style: italic;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .memory-text::before {
+      content: '"';
+      font-size: 3rem;
+      color: var(--secondary);
+      position: absolute;
+      left: -1rem;
+      top: -1rem;
+      opacity: 0.3;
     }
 
     .memory-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      color: #666;
+      font-size: 0.95rem;
     }
 
     .memory-author {
-      color: #92400e;
-      font-size: 0.9375rem;
       font-weight: 600;
+      color: var(--primary);
     }
 
-    .memory-date {
-      color: #9ca3af;
-      font-size: 0.8125rem;
+    /* SERVICE SECTION */
+    .service-section {
+      max-width: 600px;
+      margin: 0 auto;
     }
 
-    /* SERVICE INFO SECTION */
-    .service-content {
-      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-      border-radius: 1rem;
+    .service-card {
+      background: white;
       padding: 2.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
 
     .service-item {
-      display: flex;
-      gap: 1.25rem;
       margin-bottom: 2rem;
-      align-items: flex-start;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #eee;
     }
 
     .service-item:last-child {
       margin-bottom: 0;
-    }
-
-    .service-icon {
-      flex-shrink: 0;
-      width: 3rem;
-      height: 3rem;
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-    }
-
-    .service-icon svg {
-      width: 1.25rem;
-      height: 1.25rem;
-    }
-
-    .service-info {
-      flex: 1;
+      padding-bottom: 0;
+      border-bottom: none;
     }
 
     .service-label {
-      font-size: 1.125rem;
-      font-weight: 700;
-      color: #92400e;
+      font-weight: 600;
+      color: var(--primary);
+      font-size: 1.1rem;
       margin-bottom: 0.5rem;
     }
 
     .service-value {
-      color: #1f2937;
-      font-size: 1.0625rem;
+      color: #444;
+      font-size: 1.05rem;
       line-height: 1.6;
-      word-break: break-word;
     }
 
-    .service-platform {
-      color: #d97706;
-      font-size: 0.9375rem;
-      margin-top: 0.375rem;
-      font-weight: 600;
-    }
-
-    /* FOOTER SECTION */
-    .footer-section {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 3rem 2rem;
+    /* FOOTER */
+    .memorial-footer {
       text-align: center;
-      border-top: 2px solid #fde68a;
-      margin-top: 2rem;
+      padding: 3rem 0;
+      color: #666;
+      font-style: italic;
     }
 
     .footer-quote {
-      font-size: 1.375rem;
-      color: #6b7280;
-      font-style: italic;
-      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
       line-height: 1.6;
-    }
-
-    .footer-credit {
-      font-size: 0.9375rem;
-      color: #9ca3af;
-      margin-top: 2rem;
     }
 
     /* PRINT OPTIMIZATIONS */
@@ -561,6 +607,7 @@ export function generateMemorialHTML(memorialData: any): string {
       body {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        font-size: 13px;
       }
       
       .page-break {
@@ -570,27 +617,44 @@ export function generateMemorialHTML(memorialData: any): string {
       .avoid-break {
         page-break-inside: avoid;
       }
+      
+      .cover-page {
+        min-height: 27cm;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- HEADER SECTION -->
-  <div class="header-section page-break">
-    <div class="header-content">
-      <div class="profile-container">
+  <!-- COVER PAGE -->
+  <div class="cover-page page-break">
+    <div class="memorial-title">In Loving Memory</div>
+    <h1 class="cover-name">${name}</h1>
+    ${birthDate || deathDate ? `
+      <div class="cover-dates">
+        ${formatDate(birthDate) || ''} ${birthDate && deathDate ? '—' : ''} ${formatDate(deathDate) || ''}
+      </div>
+    ` : ''}
+    ${location ? `
+      <div class="cover-location">${location}</div>
+    ` : ''}
+    <div class="cover-quote">
+      "Those we love don't go away, they walk beside us every day. 
+      Unseen, unheard, but always near, still loved, still missed, and very dear."
+    </div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div class="content-page page-break">
+    <div class="section-header">
+      <h2 class="section-title">In Loving Memory</h2>
+      <div class="section-subtitle">A Life Beautifully Lived</div>
+    </div>
+    
+    <div class="profile-section">
+      <div class="profile-image-container">
         ${profileImage ? `
-          <img 
-            src="${profileImage}" 
-            alt="${name}"
-            class="profile-image"
-            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-          />
-          <div class="profile-placeholder" style="display: none;">
-            <svg class="profile-icon" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-            </svg>
-          </div>
+          <img src="${profileImage}" alt="${name}" class="profile-image" />
         ` : `
           <div class="profile-placeholder">
             <svg class="profile-icon" fill="currentColor" viewBox="0 0 20 20">
@@ -600,20 +664,20 @@ export function generateMemorialHTML(memorialData: any): string {
         `}
       </div>
       
-      <h1 class="header-name">${name}</h1>
+      <h2 class="profile-name">${name}</h2>
       
       ${birthDate || deathDate ? `
-        <div class="header-dates">
-          ${birthDate || ''} ${birthDate && deathDate ? '—' : ''} ${deathDate || ''}
+        <div class="profile-dates">
+          ${formatDate(birthDate) || ''} ${birthDate && deathDate ? '—' : ''} ${formatDate(deathDate) || ''}
         </div>
       ` : ''}
       
       ${location ? `
-        <div class="header-location">
-          <svg class="location-icon" fill="currentColor" viewBox="0 0 20 20">
+        <div class="profile-location">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
           </svg>
-          <span>${location}</span>
+          ${location}
         </div>
       ` : ''}
     </div>
@@ -621,40 +685,44 @@ export function generateMemorialHTML(memorialData: any): string {
 
   <!-- OBITUARY SECTION -->
   ${obituary ? `
-    <div class="section-container avoid-break">
-      <div class="section-card">
+    <div class="content-page ${!obituary && timeline.length === 0 ? 'page-break' : ''}">
+      <div class="section-header">
         <h2 class="section-title">Life Story</h2>
+        <div class="section-subtitle">A Legacy of Love and Memories</div>
+      </div>
+      
+      <div class="obituary-section">
         <div class="obituary-content">
-          ${obituary.split('\n').map((paragraph: string) => 
+          ${obituary.split('\n\n').map((paragraph: string) => 
             paragraph.trim() ? `<p>${paragraph}</p>` : ''
           ).join('')}
         </div>
       </div>
     </div>
+    ${timeline.length > 0 ? '<div class="section-divider"></div>' : ''}
   ` : ''}
 
   <!-- TIMELINE SECTION -->
   ${timeline.length > 0 ? `
-    <div class="section-container ${obituary ? 'page-break' : ''}">
-      <div class="section-card">
-        <h2 class="section-title">Life Journey</h2>
-        <div class="timeline-container">
-          <div class="timeline-line"></div>
+    <div class="content-page ${obituary ? '' : 'page-break'}">
+      <div class="section-header">
+        <h2 class="section-title">Life's Journey</h2>
+        <div class="section-subtitle">Milestones and Memories</div>
+      </div>
+      
+      <div class="timeline-section">
+        <div class="timeline">
           ${timeline.map((event: any) => `
             <div class="timeline-item avoid-break">
-              <div class="timeline-year">${event.year}</div>
+              <div class="timeline-marker">${event.year}</div>
               <div class="timeline-content">
+                <div class="timeline-year">${event.year}</div>
                 <h3 class="timeline-title">${event.title}</h3>
                 ${event.description ? `
-                  <p class="timeline-description">${event.description}</p>
+                  <div class="timeline-description">${event.description}</div>
                 ` : ''}
                 ${event.location ? `
-                  <div class="timeline-location">
-                    <svg style="width: 1rem; height: 1rem;" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                    </svg>
-                    <span>${event.location}</span>
-                  </div>
+                  <div class="timeline-location">${event.location}</div>
                 ` : ''}
               </div>
             </div>
@@ -662,48 +730,46 @@ export function generateMemorialHTML(memorialData: any): string {
         </div>
       </div>
     </div>
+    ${favorites.length > 0 ? '<div class="section-divider"></div>' : ''}
   ` : ''}
 
   <!-- FAVORITES SECTION -->
   ${favorites.length > 0 ? `
-    <div class="section-container ${timeline.length > 0 ? 'page-break' : ''}">
-      <div class="section-card">
+    <div class="content-page ${timeline.length > 0 ? '' : 'page-break'}">
+      <div class="section-header">
         <h2 class="section-title">Cherished Favorites</h2>
+        <div class="section-subtitle">The Things They Loved Most</div>
+      </div>
+      
+      <div class="favorites-section">
         <div class="favorites-grid">
           ${favorites.map((fav: any) => `
-            <div class="favorite-item avoid-break">
-              <div class="favorite-header">
-                <div class="favorite-icon">${getFavoriteIcon(fav.category)}</div>
-                <h3 class="favorite-category">${fav.category}</h3>
-              </div>
-              <p class="favorite-text">${fav.answer || fav.item || 'No details provided'}</p>
+            <div class="favorite-card avoid-break">
+              <div class="favorite-icon">${getFavoriteIcon(fav.category)}</div>
+              <h3 class="favorite-category">${fav.category}</h3>
+              <p class="favorite-text">${fav.answer || fav.item || 'Remembered with love'}</p>
             </div>
           `).join('')}
         </div>
       </div>
     </div>
+    ${familyTree.length > 0 ? '<div class="section-divider"></div>' : ''}
   ` : ''}
 
-  <!-- FAMILY TREE SECTION -->
+  <!-- FAMILY SECTION -->
   ${familyTree.length > 0 ? `
-    <div class="section-container ${favorites.length > 0 ? 'page-break' : ''}">
-      <div class="section-card">
+    <div class="content-page ${favorites.length > 0 ? '' : 'page-break'}">
+      <div class="section-header">
         <h2 class="section-title">Beloved Family</h2>
+        <div class="section-subtitle">A Circle of Love</div>
+      </div>
+      
+      <div class="family-section">
         <div class="family-grid">
           ${familyTree.map((member: any) => `
             <div class="family-member avoid-break">
               ${member.image ? `
-                <img 
-                  src="${member.image}" 
-                  alt="${member.name}"
-                  class="family-image"
-                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                />
-                <div class="family-placeholder" style="display: none;">
-                  <span class="family-initials">
-                    ${(member.name || 'Unknown').split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                  </span>
-                </div>
+                <img src="${member.image}" alt="${member.name}" class="family-image" />
               ` : `
                 <div class="family-placeholder">
                   <span class="family-initials">
@@ -712,155 +778,119 @@ export function generateMemorialHTML(memorialData: any): string {
                 </div>
               `}
               <div class="family-info">
-                <p class="family-name">${member.name || 'Unknown'}</p>
-                <p class="family-relation">${member.relation || 'Family'}</p>
+                <div class="family-name">${member.name || 'Family Member'}</div>
+                <div class="family-relation">${member.relation || 'Loved One'}</div>
               </div>
             </div>
           `).join('')}
         </div>
       </div>
     </div>
+    ${gallery.length > 0 ? '<div class="section-divider"></div>' : ''}
   ` : ''}
 
   <!-- GALLERY SECTION -->
   ${gallery.length > 0 ? `
-    <div class="section-container ${familyTree.length > 0 ? 'page-break' : ''}">
-      <div class="section-card">
-        <h2 class="section-title">Photo Gallery</h2>
+    <div class="content-page ${familyTree.length > 0 ? '' : 'page-break'}">
+      <div class="section-header">
+        <h2 class="section-title">Photo Memories</h2>
+        <div class="section-subtitle">Precious Moments Captured Forever</div>
+      </div>
+      
+      <div class="gallery-section">
         <div class="gallery-grid">
           ${gallery.slice(0, 9).map((img: any, index: number) => `
             <div class="gallery-item avoid-break">
               <img 
                 src="${img.url || img}" 
-                alt="Memory photo ${index + 1}"
+                alt="Memory ${index + 1}"
                 class="gallery-image"
-                onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'gallery-placeholder\\'><svg style=\\'width:2rem;height:2rem;color:#fbbf24\\' fill=\\'currentColor\\' viewBox=\\'0 0 20 20\\'><path fill-rule=\\'evenodd\\' d=\\'M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z\\' clip-rule=\\'evenodd\\'></path></svg></div>';"
               />
             </div>
           `).join('')}
         </div>
         ${gallery.length > 9 ? `
-          <div class="gallery-more">+ ${gallery.length - 9} more photos</div>
+          <div style="text-align: center; margin-top: 2rem; color: #666; font-style: italic;">
+            + ${gallery.length - 9} more cherished photos
+          </div>
         ` : ''}
       </div>
     </div>
+    ${memoryWall.length > 0 ? '<div class="section-divider"></div>' : ''}
   ` : ''}
 
-  <!-- MEMORY WALL SECTION -->
+  <!-- MEMORIES SECTION -->
   ${memoryWall.length > 0 ? `
-    <div class="section-container ${gallery.length > 0 ? 'page-break' : ''}">
-      <div class="section-card">
+    <div class="content-page ${gallery.length > 0 ? '' : 'page-break'}">
+      <div class="section-header">
         <h2 class="section-title">Shared Memories</h2>
-        <div class="memory-list">
-          ${memoryWall.map((memory: any) => `
-            <div class="memory-item avoid-break">
-              <div class="memory-content">
-                <div class="memory-avatar">
-                  ${(memory.author || memory.authorName || 'A').charAt(0).toUpperCase()}
-                </div>
-                <div class="memory-body">
-                  <p class="memory-text">
-                    "${memory.text || memory.message || 'No message'}"
-                  </p>
-                  <div class="memory-footer">
-                    <p class="memory-author">
-                      — ${memory.author || memory.authorName || 'Anonymous'}
-                    </p>
-                    ${memory.date || memory.createdAt ? `
-                      <p class="memory-date">
-                        ${new Date(memory.date || memory.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                    ` : ''}
-                  </div>
-                </div>
-              </div>
+        <div class="section-subtitle">Words of Love and Remembrance</div>
+      </div>
+      
+      <div class="memories-section">
+        ${memoryWall.map((memory: any) => `
+          <div class="memory-card avoid-break">
+            <div class="memory-text">
+              ${memory.text || memory.message || 'Remembered with love and affection'}
             </div>
-          `).join('')}
-        </div>
+            <div class="memory-footer">
+              <span class="memory-author">— ${memory.author || memory.authorName || 'Loved One'}</span>
+              <span class="memory-date">${formatDate(memory.date || memory.createdAt)}</span>
+            </div>
+          </div>
+        `).join('')}
       </div>
     </div>
+    ${service && (service.venue || service.date || service.virtualLink) ? '<div class="section-divider"></div>' : ''}
   ` : ''}
 
-  <!-- SERVICE INFORMATION SECTION -->
+  <!-- SERVICE SECTION -->
   ${service && (service.venue || service.date || service.virtualLink) ? `
-    <div class="section-container ${memoryWall.length > 0 ? 'page-break' : ''}">
-      <div class="section-card">
+    <div class="content-page ${memoryWall.length > 0 ? '' : 'page-break'}">
+      <div class="section-header">
         <h2 class="section-title">Service Information</h2>
-        <div class="service-content">
+        <div class="section-subtitle">Celebrating a Beautiful Life</div>
+      </div>
+      
+      <div class="service-section">
+        <div class="service-card">
           ${service.venue ? `
             <div class="service-item">
-              <div class="service-icon">
-                <svg fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                </svg>
-              </div>
-              <div class="service-info">
-                <h3 class="service-label">Venue</h3>
-                <p class="service-value">${service.venue}</p>
-              </div>
+              <div class="service-label">Venue</div>
+              <div class="service-value">${service.venue}</div>
             </div>
           ` : ''}
           
           ${service.address ? `
             <div class="service-item">
-              <div class="service-icon">
-                <svg fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
-                </svg>
-              </div>
-              <div class="service-info">
-                <h3 class="service-label">Address</h3>
-                <p class="service-value">${service.address}</p>
-              </div>
+              <div class="service-label">Address</div>
+              <div class="service-value">${service.address}</div>
             </div>
           ` : ''}
           
           ${service.date ? `
             <div class="service-item">
-              <div class="service-icon">
-                <svg fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
-                </svg>
-              </div>
-              <div class="service-info">
-                <h3 class="service-label">Date</h3>
-                <p class="service-value">${service.date}</p>
-              </div>
+              <div class="service-label">Date</div>
+              <div class="service-value">${formatDate(service.date)}</div>
             </div>
           ` : ''}
           
           ${service.time ? `
             <div class="service-item">
-              <div class="service-icon">
-                <svg fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-                </svg>
-              </div>
-              <div class="service-info">
-                <h3 class="service-label">Time</h3>
-                <p class="service-value">${service.time}</p>
-              </div>
+              <div class="service-label">Time</div>
+              <div class="service-value">${service.time}</div>
             </div>
           ` : ''}
           
           ${service.virtualLink ? `
             <div class="service-item">
-              <div class="service-icon">
-                <svg fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z"></path>
-                </svg>
-              </div>
-              <div class="service-info">
-                <h3 class="service-label">Virtual Attendance</h3>
-                <p class="service-value">${service.virtualLink}</p>
-                ${service.virtualPlatform ? `
-                  <p class="service-platform">Platform: ${service.virtualPlatform}</p>
-                ` : ''}
-              </div>
+              <div class="service-label">Virtual Attendance</div>
+              <div class="service-value">${service.virtualLink}</div>
+              ${service.virtualPlatform ? `
+                <div style="color: var(--primary); font-size: 0.95rem; margin-top: 0.25rem;">
+                  Platform: ${service.virtualPlatform}
+                </div>
+              ` : ''}
             </div>
           ` : ''}
         </div>
@@ -868,17 +898,18 @@ export function generateMemorialHTML(memorialData: any): string {
     </div>
   ` : ''}
 
-  <!-- FOOTER -->
-  <div class="footer-section">
-    <p class="footer-quote">
-      "Those we love don't go away,
-    </p>
-    <p class="footer-quote">
-      they walk beside us every day."
-    </p>
-    <p class="footer-credit">
-      Created with love and remembrance • ${new Date().getFullYear()}
-    </p>
+  <!-- FINAL PAGE -->
+  <div class="content-page">
+    <div class="memorial-footer">
+      <div class="footer-quote">
+        "What we have once enjoyed we can never lose. All that we love deeply becomes a part of us."<br>
+        — Helen Keller
+      </div>
+      <div>
+        This memorial booklet was created with love and remembrance<br>
+        ${new Date().getFullYear()}
+      </div>
+    </div>
   </div>
 
 </body>
@@ -886,19 +917,26 @@ export function generateMemorialHTML(memorialData: any): string {
   `;
 }
 
-// Helper function to get icons for favorites
+// Enhanced icon mapping
 function getFavoriteIcon(category: string): string {
   const icons: { [key: string]: string } = {
     food: '🍽️',
     movie: '🎬',
     book: '📚',
     song: '🎵',
+    music: '🎵',
     hobby: '🎨',
     place: '📍',
     color: '🎨',
     memory: '🌟',
     quote: '💬',
     sport: '⚽',
+    drink: '☕',
+    travel: '✈️',
+    animal: '🐾',
+    flower: '🌸',
+    season: '🍂',
+    holiday: '🎄',
     default: '💫'
   };
   
