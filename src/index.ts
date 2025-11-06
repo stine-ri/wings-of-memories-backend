@@ -10,17 +10,19 @@ const app = new Hono();
 
 // CORS middleware 
 app.use('*', async (c, next) => {
-  console.log('CORS Middleware - Origin:', c.req.header('Origin'));
-  await next();
+  const corsMiddleware = cors({
+    origin: [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'https://wings-of-memory-frontend.vercel.app'
+    ],
+    credentials: true,
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposeHeaders: ['Content-Disposition'],
+  });
+  return corsMiddleware(c, next);
 });
-
-app.use('*', cors({
-  origin: [
-    'http://localhost:5173',
-    'https://wings-of-memory-frontend.vercel.app'
-  ],
-  credentials: true,
-}));
 
 // Health check
 app.get('/', (c) => c.json({ message: 'Wings of Memories API is running!' }));
