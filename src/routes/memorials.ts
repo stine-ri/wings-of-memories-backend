@@ -263,7 +263,8 @@ memorialsApp.post('/generate-pdf', authMiddleware, async (c) => {
         bottom: '0',
         left: '0'
       },
-      timeout: 60000
+      timeout: 60000,
+      displayHeaderFooter: false 
     });
 
     console.log('✅ PDF generated successfully:', pdfBuffer.length, 'bytes');
