@@ -1,4 +1,4 @@
-// backend/routes/memorials.ts - RENDER OPTIMIZED
+// backend/routes/memorials.ts - RENDER OPTIMIZED (FIXED)
 import { Hono } from 'hono';
 import { db } from '../drizzle/db.js';
 import { memorials } from '../drizzle/schema.js';
@@ -43,22 +43,19 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
       return c.json({ error: 'Memorial not found' }, 404);
     }
 
-// In your GET /:id endpoint
-const transformedMemorial = {
-  ...memorial,
-  service: memorial.serviceInfo || {
-    venue: '',
-    address: '',
-    date: '',
-    time: '',
-    virtualLink: '',
-    virtualPlatform: 'zoom'
-  },
-  // Ensure memoryWall is properly formatted
-  memoryWall: memorial.memoryWall || [],
-  // Ensure favorites have the right structure
-  favorites: memorial.favorites || []
-};
+    const transformedMemorial = {
+      ...memorial,
+      service: memorial.serviceInfo || {
+        venue: '',
+        address: '',
+        date: '',
+        time: '',
+        virtualLink: '',
+        virtualPlatform: 'zoom'
+      },
+      memoryWall: memorial.memoryWall || [],
+      favorites: memorial.favorites || []
+    };
 
     return c.json({ memorial: transformedMemorial });
   } catch (error) {
@@ -149,7 +146,7 @@ memorialsApp.put('/:id', authMiddleware, async (c) => {
   }
 });
 
-// Generate PDF - RENDER OPTIMIZED
+// Generate PDF - RENDER OPTIMIZED (FIXED)
 memorialsApp.post('/generate-pdf', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const body = await c.req.json();
@@ -166,29 +163,54 @@ memorialsApp.post('/generate-pdf', authMiddleware, async (c) => {
     // Generate HTML from template
     const html = generateMemorialHTML(body.data);
 
-    // Configure Chromium for Render
+    // Detect environment
     const isProduction = process.env.NODE_ENV === 'production';
+    
+    console.log('🌍 Environment:', isProduction ? 'production' : 'development');
 
-    // Launch browser with Render-optimized config
+    // Get Chromium executable path
+    // CRITICAL FIX: Don't pass a directory path - let chromium package handle it
+    let executablePath;
+    
+    if (isProduction) {
+      // On Render, chromium will download and extract to /tmp automatically
+      executablePath = await chromium.executablePath();
+      console.log('✅ Chromium path (production):', executablePath);
+    } else {
+      // Local development - use system Chrome/Chromium
+      executablePath = process.env.CHROME_BIN || 
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+      console.log('✅ Chrome path (development):', executablePath);
+    }
+
+    // Configure args for Render's environment
+    const args = isProduction
+      ? [
+          ...chromium.args,
+          '--disable-gpu',
+          '--disable-dev-shm-usage',
+          '--disable-setuid-sandbox',
+          '--no-first-run',
+          '--no-sandbox',
+          '--no-zygote',
+          '--single-process',
+          '--disable-extensions'
+        ]
+      : [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage'
+        ];
+
+    // Launch browser with optimized config
     browser = await puppeteer.launch({
-      args: [
-        '--disable-gpu',
-        '--disable-dev-shm-usage',
-        '--disable-setuid-sandbox',
-        '--no-first-run',
-        '--no-sandbox',
-        '--no-zygote',
-        '--single-process',
-        '--disable-extensions'
-      ],
+      args,
       defaultViewport: {
         width: 1200,
         height: 1600,
         deviceScaleFactor: 2
       },
-      executablePath: isProduction 
-        ? await chromium.executablePath('/tmp/chromium')
-        : await chromium.executablePath(),
+      executablePath,
       headless: true,
     });
 
@@ -196,7 +218,7 @@ memorialsApp.post('/generate-pdf', authMiddleware, async (c) => {
 
     const page = await browser.newPage();
 
-    // Set viewport (redundant but safe)
+    // Set viewport for consistent rendering
     await page.setViewport({
       width: 1200,
       height: 1600,
@@ -205,7 +227,7 @@ memorialsApp.post('/generate-pdf', authMiddleware, async (c) => {
 
     console.log('📄 Loading HTML content...');
 
-    // Load HTML
+    // Load HTML with extended timeout
     await page.setContent(html, {
       waitUntil: ['domcontentloaded', 'networkidle0'],
       timeout: 30000
@@ -213,7 +235,7 @@ memorialsApp.post('/generate-pdf', authMiddleware, async (c) => {
 
     console.log('🖼️ Waiting for images...');
 
-    // Wait for images (with timeout)
+    // Wait for images with race condition timeout
     await Promise.race([
       page.evaluate(() => {
         return Promise.all(
@@ -246,7 +268,7 @@ memorialsApp.post('/generate-pdf', authMiddleware, async (c) => {
 
     console.log('✅ PDF generated successfully:', pdfBuffer.length, 'bytes');
 
-    // Set headers
+    // Set response headers
     c.header('Content-Type', 'application/pdf');
     c.header(
       'Content-Disposition',
