@@ -1,4 +1,4 @@
-// backend/utils/pdfTemplate.ts - PREMIUM MEMORIAL BOOKLET DESIGN
+// backend/utils/pdfTemplate.ts - WARM & COMFORTING MEMORIAL BOOKLET
 export function generateMemorialHTML(memorialData: any): string {
   const {
     name = 'Memorial',
@@ -38,7 +38,7 @@ export function generateMemorialHTML(memorialData: any): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>In Loving Memory of ${name}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Open+Sans:wght@300;400;500;600&display=swap');
     
     * {
       margin: 0;
@@ -54,23 +54,25 @@ export function generateMemorialHTML(memorialData: any): string {
     body {
       margin: 0;
       padding: 0;
-      font-family: 'Crimson Text', serif;
+      font-family: 'Open Sans', sans-serif;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
-      background-color: #fefdf9;
-      line-height: 1.6;
-      color: #2d3748;
+      background: linear-gradient(to bottom, #fdfbf7 0%, #f9f6f1 100%);
+      line-height: 1.7;
+      color: #4a5568;
       font-size: 14px;
     }
 
-    /* Premium color scheme */
+    /* Warm, comforting color scheme */
     :root {
-      --primary: #8b7355;
-      --secondary: #d4b896;
-      --accent: #a52a2a;
-      --light: #faf7f2;
-      --dark: #2d3748;
-      --gold: #b8860b;
+      --primary: #9b8579;
+      --secondary: #d4c5b9;
+      --accent: #b8a394;
+      --warm-light: #fdfbf7;
+      --warm-cream: #f9f6f1;
+      --soft-text: #6b7280;
+      --gentle-border: #e8dfd6;
+      --comfort-blue: #a8c5da;
     }
 
     /* Page breaks and layout */
@@ -85,16 +87,16 @@ export function generateMemorialHTML(memorialData: any): string {
     }
 
     .section-divider {
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--primary), transparent);
-      margin: 3rem 0;
-      opacity: 0.3;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gentle-border), transparent);
+      margin: 2.5rem 0;
+      opacity: 0.5;
     }
 
-    /* COVER PAGE - Elegant memorial cover */
+    /* COVER PAGE - Soft and welcoming */
     .cover-page {
       min-height: 100vh;
-      background: linear-gradient(135deg, #faf7f2 0%, #e8e0d5 100%);
+      background: linear-gradient(135deg, #fdfbf7 0%, #f5ede3 50%, #f9f6f1 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -112,61 +114,68 @@ export function generateMemorialHTML(memorialData: any): string {
       left: 0;
       right: 0;
       bottom: 0;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.03"><path d="M30,30 Q50,10 70,30 T90,50 T70,70 T50,90 T30,70 T10,50 T30,30 Z" fill="%238b7355"/></svg>');
-      background-size: 200px 200px;
+      background: radial-gradient(circle at 30% 50%, rgba(168, 197, 218, 0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 50%, rgba(212, 197, 185, 0.08) 0%, transparent 50%);
     }
 
     .memorial-title {
-      font-family: 'Crimson Text', serif;
-      font-size: 1.2rem;
+      font-family: 'Lora', serif;
+      font-size: 1.1rem;
       color: var(--primary);
-      letter-spacing: 0.3em;
+      letter-spacing: 0.25em;
       text-transform: uppercase;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
       font-weight: 400;
+      opacity: 0.9;
     }
 
     .cover-name {
-      font-family: 'Crimson Text', serif;
-      font-size: 3.5rem;
-      font-weight: 700;
-      color: var(--dark);
+      font-family: 'Lora', serif;
+      font-size: 3.2rem;
+      font-weight: 600;
+      color: #5a5147;
       margin: 2rem 0;
-      line-height: 1.1;
+      line-height: 1.2;
       position: relative;
     }
 
     .cover-name::after {
       content: '';
       position: absolute;
-      bottom: -1rem;
+      bottom: -1.2rem;
       left: 50%;
       transform: translateX(-50%);
-      width: 100px;
-      height: 2px;
-      background: var(--gold);
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
     }
 
     .cover-dates {
-      font-size: 1.4rem;
-      color: var(--primary);
+      font-size: 1.3rem;
+      color: var(--soft-text);
       font-style: italic;
       margin-bottom: 1rem;
+      font-family: 'Lora', serif;
     }
 
     .cover-location {
-      font-size: 1.1rem;
-      color: #666;
+      font-size: 1rem;
+      color: var(--soft-text);
       margin-bottom: 3rem;
     }
 
     .cover-quote {
-      font-size: 1.1rem;
-      color: var(--primary);
+      font-size: 1.05rem;
+      color: #6b7280;
       font-style: italic;
-      max-width: 400px;
-      margin: 2rem auto 0;
-      line-height: 1.8;
+      max-width: 450px;
+      margin: 2.5rem auto 0;
+      line-height: 1.9;
+      font-family: 'Lora', serif;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     }
 
     /* CONTENT PAGES */
@@ -180,10 +189,10 @@ export function generateMemorialHTML(memorialData: any): string {
     }
 
     .section-title {
-      font-family: 'Crimson Text', serif;
-      font-size: 2.2rem;
-      font-weight: 700;
-      color: var(--dark);
+      font-family: 'Lora', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      color: #5a5147;
       margin-bottom: 1rem;
       position: relative;
       display: inline-block;
@@ -192,18 +201,19 @@ export function generateMemorialHTML(memorialData: any): string {
     .section-title::after {
       content: '';
       position: absolute;
-      bottom: -0.5rem;
+      bottom: -0.6rem;
       left: 50%;
       transform: translateX(-50%);
-      width: 80px;
-      height: 2px;
-      background: var(--gold);
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
     }
 
     .section-subtitle {
-      font-size: 1.1rem;
-      color: var(--primary);
+      font-size: 1rem;
+      color: var(--soft-text);
       font-style: italic;
+      margin-top: 1rem;
     }
 
     /* PROFILE SECTION */
@@ -218,21 +228,21 @@ export function generateMemorialHTML(memorialData: any): string {
     }
 
     .profile-image {
-      width: 220px;
-      height: 220px;
+      width: 200px;
+      height: 200px;
       border-radius: 50%;
       object-fit: cover;
-      border: 8px solid white;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      border: 6px solid white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
     }
 
     .profile-placeholder {
-      width: 220px;
-      height: 220px;
+      width: 200px;
+      height: 200px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--light), var(--secondary));
-      border: 8px solid white;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      background: linear-gradient(135deg, #f9f6f1, #e8dfd6);
+      border: 6px solid white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -240,29 +250,31 @@ export function generateMemorialHTML(memorialData: any): string {
     }
 
     .profile-icon {
-      width: 80px;
-      height: 80px;
+      width: 70px;
+      height: 70px;
       color: var(--primary);
-      opacity: 0.7;
+      opacity: 0.6;
     }
 
     .profile-name {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--dark);
+      font-family: 'Lora', serif;
+      font-size: 2.2rem;
+      font-weight: 600;
+      color: #5a5147;
       margin-bottom: 1rem;
     }
 
     .profile-dates {
-      font-size: 1.3rem;
-      color: var(--primary);
+      font-family: 'Lora', serif;
+      font-size: 1.2rem;
+      color: var(--soft-text);
       font-style: italic;
       margin-bottom: 1rem;
     }
 
     .profile-location {
-      font-size: 1.1rem;
-      color: #666;
+      font-size: 1rem;
+      color: var(--soft-text);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -276,10 +288,14 @@ export function generateMemorialHTML(memorialData: any): string {
     }
 
     .obituary-content {
-      font-size: 1.1rem;
-      line-height: 1.8;
-      color: #444;
+      font-size: 1.05rem;
+      line-height: 1.9;
+      color: #5a5a5a;
       text-align: justify;
+      background: white;
+      padding: 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     }
 
     .obituary-content p {
@@ -305,7 +321,8 @@ export function generateMemorialHTML(memorialData: any): string {
       top: 0;
       bottom: 0;
       width: 2px;
-      background: linear-gradient(to bottom, var(--secondary), var(--primary));
+      background: linear-gradient(to bottom, var(--comfort-blue), var(--secondary));
+      opacity: 0.4;
     }
 
     .timeline-item {
@@ -320,48 +337,49 @@ export function generateMemorialHTML(memorialData: any): string {
       top: 0;
       width: 3rem;
       height: 3rem;
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--comfort-blue), var(--secondary));
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-weight: 700;
-      font-size: 0.9rem;
-      box-shadow: 0 4px 12px rgba(139, 115, 85, 0.3);
+      font-weight: 600;
+      font-size: 0.85rem;
+      box-shadow: 0 4px 15px rgba(168, 197, 218, 0.3);
     }
 
     .timeline-content {
       background: white;
       padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-      border-left: 4px solid var(--gold);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      border-left: 3px solid var(--comfort-blue);
     }
 
     .timeline-year {
-      font-size: 1.1rem;
-      font-weight: 700;
+      font-size: 1rem;
+      font-weight: 600;
       color: var(--primary);
       margin-bottom: 0.5rem;
     }
 
     .timeline-title {
-      font-size: 1.3rem;
+      font-family: 'Lora', serif;
+      font-size: 1.25rem;
       font-weight: 600;
-      color: var(--dark);
+      color: #5a5147;
       margin-bottom: 1rem;
     }
 
     .timeline-description {
-      color: #555;
-      line-height: 1.7;
+      color: #5a5a5a;
+      line-height: 1.8;
       margin-bottom: 1rem;
     }
 
     .timeline-location {
-      color: #777;
-      font-size: 0.95rem;
+      color: var(--soft-text);
+      font-size: 0.9rem;
       font-style: italic;
     }
 
@@ -373,26 +391,29 @@ export function generateMemorialHTML(memorialData: any): string {
 
     .favorites-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 1.5rem;
     }
 
     .favorite-card {
       background: white;
       padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-      border-top: 4px solid var(--gold);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      border-top: 3px solid var(--comfort-blue);
       text-align: center;
+      transition: transform 0.2s;
     }
 
     .favorite-icon {
       font-size: 2.5rem;
       margin-bottom: 1rem;
+      filter: saturate(0.8);
     }
 
     .favorite-category {
-      font-size: 1.2rem;
+      font-family: 'Lora', serif;
+      font-size: 1.15rem;
       font-weight: 600;
       color: var(--primary);
       margin-bottom: 1rem;
@@ -400,8 +421,8 @@ export function generateMemorialHTML(memorialData: any): string {
     }
 
     .favorite-text {
-      color: #555;
-      line-height: 1.6;
+      color: #5a5a5a;
+      line-height: 1.7;
       font-style: italic;
     }
 
@@ -413,43 +434,43 @@ export function generateMemorialHTML(memorialData: any): string {
 
     .family-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 1.5rem;
     }
 
     .family-member {
       background: white;
       padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
       display: flex;
       align-items: center;
       gap: 1rem;
     }
 
     .family-image {
-      width: 70px;
-      height: 70px;
+      width: 65px;
+      height: 65px;
       border-radius: 50%;
       object-fit: cover;
-      border: 3px solid var(--secondary);
+      border: 3px solid var(--gentle-border);
     }
 
     .family-placeholder {
-      width: 70px;
-      height: 70px;
+      width: 65px;
+      height: 65px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--light), var(--secondary));
+      background: linear-gradient(135deg, #f9f6f1, #e8dfd6);
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 3px solid var(--secondary);
+      border: 3px solid var(--gentle-border);
     }
 
     .family-initials {
       color: var(--primary);
-      font-weight: 700;
-      font-size: 1.1rem;
+      font-weight: 600;
+      font-size: 1rem;
     }
 
     .family-info {
@@ -458,14 +479,14 @@ export function generateMemorialHTML(memorialData: any): string {
 
     .family-name {
       font-weight: 600;
-      color: var(--dark);
-      font-size: 1.1rem;
+      color: #5a5147;
+      font-size: 1.05rem;
       margin-bottom: 0.25rem;
     }
 
     .family-relation {
-      color: var(--primary);
-      font-size: 0.95rem;
+      color: var(--soft-text);
+      font-size: 0.9rem;
       text-transform: capitalize;
     }
 
@@ -483,9 +504,9 @@ export function generateMemorialHTML(memorialData: any): string {
 
     .gallery-item {
       aspect-ratio: 1;
-      border-radius: 8px;
+      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     }
 
     .gallery-image {
@@ -497,7 +518,7 @@ export function generateMemorialHTML(memorialData: any): string {
     .gallery-placeholder {
       width: 100%;
       height: 100%;
-      background: linear-gradient(135deg, var(--light), var(--secondary));
+      background: linear-gradient(135deg, #f9f6f1, #e8dfd6);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -512,37 +533,40 @@ export function generateMemorialHTML(memorialData: any): string {
     .memory-card {
       background: white;
       padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
       margin-bottom: 1.5rem;
-      border-left: 4px solid var(--gold);
+      border-left: 3px solid var(--comfort-blue);
     }
 
     .memory-text {
-      font-size: 1.1rem;
-      line-height: 1.7;
-      color: #444;
+      font-family: 'Lora', serif;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: #5a5a5a;
       font-style: italic;
       margin-bottom: 1.5rem;
       position: relative;
+      padding-left: 1.5rem;
     }
 
     .memory-text::before {
       content: '"';
-      font-size: 3rem;
+      font-size: 2.5rem;
       color: var(--secondary);
       position: absolute;
-      left: -1rem;
-      top: -1rem;
-      opacity: 0.3;
+      left: -0.5rem;
+      top: -0.8rem;
+      opacity: 0.4;
+      font-family: Georgia, serif;
     }
 
     .memory-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      color: #666;
-      font-size: 0.95rem;
+      color: var(--soft-text);
+      font-size: 0.9rem;
     }
 
     .memory-author {
@@ -559,14 +583,14 @@ export function generateMemorialHTML(memorialData: any): string {
     .service-card {
       background: white;
       padding: 2.5rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     }
 
     .service-item {
       margin-bottom: 2rem;
       padding-bottom: 2rem;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--gentle-border);
     }
 
     .service-item:last-child {
@@ -578,28 +602,34 @@ export function generateMemorialHTML(memorialData: any): string {
     .service-label {
       font-weight: 600;
       color: var(--primary);
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       margin-bottom: 0.5rem;
     }
 
     .service-value {
-      color: #444;
-      font-size: 1.05rem;
-      line-height: 1.6;
+      color: #5a5a5a;
+      font-size: 1rem;
+      line-height: 1.7;
     }
 
     /* FOOTER */
     .memorial-footer {
       text-align: center;
-      padding: 3rem 0;
-      color: #666;
+      padding: 3rem 2rem;
+      color: var(--soft-text);
       font-style: italic;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      max-width: 600px;
+      margin: 0 auto;
     }
 
     .footer-quote {
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-      line-height: 1.6;
+      font-family: 'Lora', serif;
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.8;
+      color: #5a5147;
     }
 
     /* PRINT OPTIMIZATIONS */
@@ -810,7 +840,7 @@ export function generateMemorialHTML(memorialData: any): string {
           `).join('')}
         </div>
         ${gallery.length > 9 ? `
-          <div style="text-align: center; margin-top: 2rem; color: #666; font-style: italic;">
+          <div style="text-align: center; margin-top: 2rem; color: var(--soft-text); font-style: italic;">
             + ${gallery.length - 9} more cherished photos
           </div>
         ` : ''}
@@ -887,7 +917,7 @@ export function generateMemorialHTML(memorialData: any): string {
               <div class="service-label">Virtual Attendance</div>
               <div class="service-value">${service.virtualLink}</div>
               ${service.virtualPlatform ? `
-                <div style="color: var(--primary); font-size: 0.95rem; margin-top: 0.25rem;">
+                <div style="color: var(--primary); font-size: 0.9rem; margin-top: 0.25rem;">
                   Platform: ${service.virtualPlatform}
                 </div>
               ` : ''}
@@ -905,7 +935,7 @@ export function generateMemorialHTML(memorialData: any): string {
         "What we have once enjoyed we can never lose. All that we love deeply becomes a part of us."<br>
         — Helen Keller
       </div>
-      <div>
+      <div style="margin-top: 1rem; font-size: 0.95rem;">
         This memorial booklet was created with love and remembrance<br>
         ${new Date().getFullYear()}
       </div>
