@@ -420,7 +420,7 @@ export function generateMemorialHTML(memorialData: any): string {
       justify-content: center;
       color: var(--primary); 
     }
-      
+
     .favorite-icon svg {
      width: 48px;
      height: 48px;
@@ -506,40 +506,70 @@ export function generateMemorialHTML(memorialData: any): string {
       text-transform: capitalize;
     }
 
-    /* GALLERY SECTION */
-    .gallery-section {
-      max-width: 800px;
-      margin: 0 auto;
-    }
+   /* GALLERY SECTION - Updated styles */
+.gallery-section {
+  max-width: 800px;
+  margin: 0 auto;
+}
 
-    .gallery-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-    }
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
 
-    .gallery-item {
-      aspect-ratio: 1;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    }
+.gallery-item {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: white;
+  padding: 0.75rem;
+}
 
-    .gallery-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+.gallery-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
 
-    .gallery-placeholder {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #f9f6f1, #e8dfd6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+.gallery-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f9f6f1, #e8dfd6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
 
+/* Add these new styles for category organization */
+.gallery-category {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.gallery-category-title {
+  font-family: 'Lora', serif;
+  font-size: 1.4rem;
+  color: var(--primary);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--gentle-border);
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.gallery-caption {
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--soft-text);
+  line-height: 1.4;
+  padding: 0 0.5rem;
+}
     /* MEMORIES SECTION */
     .memories-section {
       max-width: 700px;
@@ -834,36 +864,85 @@ export function generateMemorialHTML(memorialData: any): string {
     </div>
     ${gallery.length > 0 ? '<div class="section-divider"></div>' : ''}
   ` : ''}
-
-  <!-- GALLERY SECTION -->
-  ${gallery.length > 0 ? `
-    <div class="content-page ${familyTree.length > 0 ? '' : 'page-break'}">
-      <div class="section-header">
-        <h2 class="section-title">Photo Memories</h2>
-        <div class="section-subtitle">Precious Moments Captured Forever</div>
-      </div>
-      
-      <div class="gallery-section">
-        <div class="gallery-grid">
-          ${gallery.slice(0, 9).map((img: any, index: number) => `
-            <div class="gallery-item avoid-break">
-              <img 
-                src="${img.url || img}" 
-                alt="Memory ${index + 1}"
-                class="gallery-image"
-              />
-            </div>
-          `).join('')}
-        </div>
-        ${gallery.length > 9 ? `
-          <div style="text-align: center; margin-top: 2rem; color: var(--soft-text); font-style: italic;">
-            + ${gallery.length - 9} more cherished photos
-          </div>
-        ` : ''}
-      </div>
+ <!-- GALLERY SECTION -->
+// GALLERY SECTION - Updated to show categories from your frontend data
+${gallery.length > 0 ? `
+  <div class="content-page ${familyTree.length > 0 ? '' : 'page-break'}">
+    <div class="section-header">
+      <h2 class="section-title">Photo Memories</h2>
+      <div class="section-subtitle">Precious Moments Captured Forever</div>
     </div>
-    ${memoryWall.length > 0 ? '<div class="section-divider"></div>' : ''}
-  ` : ''}
+    
+    <div class="gallery-section">
+      ${(() => {
+        // Group images by category - using the category field from your frontend
+        const groupedImages: {[category: string]: any[]} = {};
+        gallery.forEach((img: any) => {
+          // Use the category from your GalleryImage interface
+          const category = img.category || 'Other Memories';
+          if (!groupedImages[category]) {
+            groupedImages[category] = [];
+          }
+          groupedImages[category].push(img);
+        });
+
+        let html = '';
+        Object.entries(groupedImages).forEach(([category, images], categoryIndex) => {
+          html += `
+            <div class="gallery-category avoid-break" style="margin-bottom: 3rem;">
+              <h3 class="gallery-category-title" style="
+                font-family: 'Lora', serif;
+                font-size: 1.4rem;
+                color: var(--primary);
+                margin-bottom: 1.5rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 2px solid var(--gentle-border);
+                text-align: center;
+                text-transform: capitalize;
+              ">${category}</h3>
+              
+              <div class="gallery-grid">
+                ${images.map((img: any, index: number) => `
+                  <div class="gallery-item">
+                    <img 
+                      src="${img.url || img}" 
+                      alt="${img.caption || img.alt || `Memory ${index + 1}`}"
+                      class="gallery-image"
+                    />
+                    ${img.caption ? `
+                      <div class="gallery-caption" style="
+                        margin-top: 0.75rem;
+                        text-align: center;
+                        font-size: 0.85rem;
+                        color: var(--soft-text);
+                        line-height: 1.4;
+                        padding: 0 0.5rem;
+                      ">${img.caption}</div>
+                    ` : ''}
+                    ${img.uploadedAt ? `
+                      <div style="
+                        text-align: center;
+                        font-size: 0.75rem;
+                        color: var(--soft-text);
+                        margin-top: 0.25rem;
+                        font-style: italic;
+                      ">${formatDate(img.uploadedAt)}</div>
+                    ` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            
+            ${categoryIndex < Object.keys(groupedImages).length - 1 ? 
+              '<div class="section-divider" style="margin: 2rem 0;"></div>' : ''}
+          `;
+        });
+        return html;
+      })()}
+    </div>
+  </div>
+  ${memoryWall.length > 0 ? '<div class="section-divider"></div>' : ''}
+` : ''}
 
   <!-- MEMORIES SECTION -->
   ${memoryWall.length > 0 ? `
