@@ -190,30 +190,34 @@ export function generateMemorialHTML(memorialData: any): string {
 
     .section-title {
       font-family: 'Lora', serif;
-      font-size: 2rem;
+      font-size: 2.4rem;
       font-weight: 600;
       color: #5a5147;
-      margin-bottom: 1rem;
+      margin-bottom: 1.2rem;
       position: relative;
       display: inline-block;
+      letter-spacing: 0.02em;
     }
 
     .section-title::after {
       content: '';
       position: absolute;
-      bottom: -0.6rem;
+      bottom: -0.7rem;
       left: 50%;
       transform: translateX(-50%);
-      width: 60px;
-      height: 1px;
+      width: 80px;
+      height: 2px;
       background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.6;
     }
 
     .section-subtitle {
-      font-size: 1rem;
+      font-size: 1.05rem;
       color: var(--soft-text);
       font-style: italic;
-      margin-top: 1rem;
+      margin-top: 1.2rem;
+      font-weight: 300;
+      letter-spacing: 0.01em;
     }
 
     /* PROFILE SECTION */
@@ -406,9 +410,14 @@ export function generateMemorialHTML(memorialData: any): string {
     }
 
     .favorite-icon {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-      filter: saturate(0.8);
+      font-size: 3rem;
+      margin-bottom: 1.2rem;
+      filter: saturate(0.8) brightness(1.1);
+      line-height: 1;
+      height: 3.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .favorite-category {
