@@ -865,7 +865,6 @@ export function generateMemorialHTML(memorialData: any): string {
     ${gallery.length > 0 ? '<div class="section-divider"></div>' : ''}
   ` : ''}
  <!-- GALLERY SECTION -->
-// GALLERY SECTION - Updated to show categories from your frontend data
 ${gallery.length > 0 ? `
   <div class="content-page ${familyTree.length > 0 ? '' : 'page-break'}">
     <div class="section-header">
