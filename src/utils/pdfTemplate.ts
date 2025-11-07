@@ -418,8 +418,15 @@ export function generateMemorialHTML(memorialData: any): string {
       display: flex;
       align-items: center;
       justify-content: center;
+      color: var(--primary); 
     }
-
+      
+    .favorite-icon svg {
+     width: 48px;
+     height: 48px;
+     color: inherit; /* Inherit the primary color */
+     opacity: 0.85;
+    }
     .favorite-category {
       font-family: 'Lora', serif;
       font-size: 1.15rem;
@@ -957,27 +964,93 @@ export function generateMemorialHTML(memorialData: any): string {
 }
 
 // Enhanced icon mapping
+// Enhanced icon mapping with SVG icons for PDF compatibility
 function getFavoriteIcon(category: string): string {
   const icons: { [key: string]: string } = {
-    food: '🍽️',
-    movie: '🎬',
-    book: '📚',
-    song: '🎵',
-    music: '🎵',
-    hobby: '🎨',
-    place: '📍',
-    color: '🎨',
-    memory: '🌟',
-    quote: '💬',
-    sport: '⚽',
-    drink: '☕',
-    travel: '✈️',
-    animal: '🐾',
-    flower: '🌸',
-    season: '🍂',
-    holiday: '🎄',
-    default: '💫'
+    // Food & Drink
+    food: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"/>
+    </svg>`,
+    
+    drink: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM2 21h18v-2H2v2z"/>
+    </svg>`,
+    
+    // Entertainment
+    movie: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+    </svg>`,
+    
+    book: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
+    </svg>`,
+    
+    song: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+    </svg>`,
+    
+    music: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+    </svg>`,
+    
+    // Activities & Hobbies
+    hobby: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+    </svg>`,
+    
+    sport: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.5v-3.5H9V9h7c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-3zm-1-5.5v-3.5h5V10H9V8.5c0-1.1.9-2 2-2h5v3h-4z"/>
+    </svg>`,
+    
+    // Places & Nature
+    place: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+    </svg>`,
+    
+    travel: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+    </svg>`,
+    
+    flower: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M12 22c4.97 0 9-4.03 9-9-4.97 0-9 4.03-9 9zM5.6 10.25c0 1.38 1.12 2.5 2.5 2.5.53 0 1.01-.16 1.42-.44l-.02.19c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5l-.02-.19c.4.28.89.44 1.42.44 1.38 0 2.5-1.12 2.5-2.5 0-1-.59-1.85-1.43-2.25.84-.4 1.43-1.25 1.43-2.25 0-1.38-1.12-2.5-2.5-2.5-.53 0-1.01.16-1.42.44l.02-.19C14.5 2.12 13.38 1 12 1S9.5 2.12 9.5 3.5l.02.19c-.4-.28-.89-.44-1.42-.44-1.38 0-2.5 1.12-2.5 2.5 0 1 .59 1.85 1.43 2.25-.84.4-1.43 1.25-1.43 2.25zM12 5.5c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5S9.5 9.38 9.5 8s1.12-2.5 2.5-2.5zM3 13c0 4.97 4.03 9 9 9 0-4.97-4.03-9-9-9z"/>
+    </svg>`,
+    
+    animal: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <circle cx="4.5" cy="9.5" r="2.5"/>
+      <circle cx="9" cy="5.5" r="2.5"/>
+      <circle cx="15" cy="5.5" r="2.5"/>
+      <circle cx="19.5" cy="9.5" r="2.5"/>
+      <path d="M17.34 14.86c-.87-1.02-1.6-1.89-2.48-2.91-.46-.54-1.05-1.08-1.75-1.32-.11-.04-.22-.07-.33-.09-.25-.04-.52-.04-.78-.04s-.53 0-.79.05c-.11.02-.22.05-.33.09-.7.24-1.28.78-1.75 1.32-.87 1.02-1.6 1.89-2.48 2.91-1.31 1.31-2.92 2.76-2.62 4.79.29 1.02 1.02 2.03 2.33 2.32.73.15 3.06-.44 5.54-.44h.18c2.48 0 4.81.58 5.54.44 1.31-.29 2.04-1.31 2.33-2.32.31-2.04-1.3-3.49-2.61-4.8z"/>
+    </svg>`,
+    
+    season: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M12.01 6c2.61 0 4.89 1.86 5.4 4.43l.3 1.5 1.52.11c1.56.11 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3h-13c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.95 6 12.01 6m0-2C9.12 4 6.6 5.64 5.35 8.04 2.35 8.36.01 10.91.01 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96C18.68 6.59 15.65 4 12.01 4z"/>
+    </svg>`,
+    
+    holiday: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M19.48 12.35c-.11-.36-.39-.64-.75-.71L12 10 8.23 2.38c-.15-.37-.5-.61-.89-.61s-.74.24-.89.61L2.78 11.64c-.11.36-.05.76.16 1.07.21.31.55.5.91.5h4.72l1.56 4.68c.15.37.5.61.89.61s.74-.24.89-.61l2.01-6.02 5.89 1.43c.36.09.76-.02 1.05-.3.29-.27.42-.68.32-1.05zM13.6 15.43l-.89-2.67 2.67.65-1.78 2.02z"/>
+    </svg>`,
+    
+    // Abstract concepts
+    color: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+    </svg>`,
+    
+    memory: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+    </svg>`,
+    
+    quote: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/>
+    </svg>`,
+    
+    // Default fallback
+    default: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+    </svg>`
   };
   
   return icons[category.toLowerCase()] || icons.default;
 }
+  
+ 
