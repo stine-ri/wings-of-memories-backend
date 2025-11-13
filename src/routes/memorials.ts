@@ -1,12 +1,13 @@
 // backend/routes/memorials.ts - FIXED WITH PROPER SERVICE TYPING
 import { Hono } from 'hono';
 import { db } from '../drizzle/db.js';
-import { memorials, memories } from '../drizzle/schema.js';
+import { memorials, memories, users } from '../drizzle/schema.js';
 import { eq, desc } from 'drizzle-orm';
 import { authMiddleware } from '../middleware/bearAuth.js';
 import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 import { generateMemorialHTML } from '../utils/pdfTemplate.js';
+import { inArray } from 'drizzle-orm';
 
 const memorialsApp = new Hono();
 
@@ -610,6 +611,60 @@ memorialsApp.post('/:id/publish', authMiddleware, async (c) => {
     console.error('Publish error:', error);
     return c.json({ error: 'Failed to publish memorial' }, 500);
   }
+});
+
+// Add this debug endpoint to check user-memorial relationships
+memorialsApp.get('/debug/user-memorials', authMiddleware, async (c) => {
+  const userId = c.get('userId');
+  
+  try {
+    // Get current user info
+    const [currentUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId));
+
+    // Get memorials belonging to this user
+    const userMemorials = await db
+      .select()
+      .from(memorials)
+      .where(eq(memorials.userId, userId));
+
+    // Also check if the memorials from your logs exist and who they belong to
+    const memorialIdsFromLogs = [
+      'b1b8c3b2-3405-4b85-a36a-4930e88ffe6d',
+      '2e6bdd41-e7d9-4d70-bedd-63691cd5f6fe'
+    ];
+
+    const memorialOwners = await db
+      .select({
+        memorialId: memorials.id,
+        memorialName: memorials.name,
+        userId: memorials.userId,
+        userEmail: users.email
+      })
+      .from(memorials)
+      .leftJoin(users, eq(memorials.userId, users.id))
+      .where(inArray(memorials.id, memorialIdsFromLogs));
+
+    return c.json({
+      currentUser: {
+        id: currentUser?.id,
+        email: currentUser?.email
+      },
+      userMemorials: userMemorials.map(m => ({ id: m.id, name: m.name })),
+      memorialOwners: memorialOwners,
+      summary: {
+        userMemorialsCount: userMemorials.length,
+        memorialsFromLogsCount: memorialOwners.length
+      }
+    });
+  } catch (error) {
+  console.error('Debug error:', error);
+  const message = error instanceof Error ? error.message : String(error);
+  return c.json({ error: message }, 500);
+}
+
 });
 
 export { memorialsApp };
