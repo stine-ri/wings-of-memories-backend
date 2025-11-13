@@ -40,6 +40,7 @@ memorialsApp.get('/', authMiddleware, async (c) => {
 });
 
 // Get single memorial - FIXED WITH PROPER SERVICE TYPING
+// Update the GET memorial endpoint with detailed debugging
 memorialsApp.get('/:id', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const memorialId = c.req.param('id');
@@ -50,21 +51,49 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
       .from(memorials)
       .where(eq(memorials.id, memorialId));
 
-  // ADD THIS DEBUG LOGGING
-    console.log('🗄️ Database memorial data:', {
+    // COMPREHENSIVE DEBUGGING
+    console.log('🔍 RAW DATABASE DATA ANALYSIS:', {
       id: memorial?.id,
       name: memorial?.name,
-      timelineLength: memorial && Array.isArray(memorial.timeline) ? memorial.timeline.length : 0,
-      favoritesLength: memorial && Array.isArray(memorial.favorites) ? memorial.favorites.length : 0,
-      familyTreeLength: memorial && Array.isArray(memorial.familyTree) ? memorial.familyTree.length : 0,
-      galleryLength: memorial && Array.isArray(memorial.gallery) ? memorial.gallery.length : 0,
-      memoryWallLength: memorial && Array.isArray(memorial.memoryWall) ? memorial.memoryWall.length : 0,
+      // Check the actual data types and values
+      timeline: {
+        exists: !!memorial?.timeline,
+        type: typeof memorial?.timeline,
+        value: memorial?.timeline,
+        isArray: Array.isArray(memorial?.timeline),
+        length: Array.isArray(memorial?.timeline) ? memorial.timeline.length : 'N/A'
+      },
+      favorites: {
+        exists: !!memorial?.favorites,
+        type: typeof memorial?.favorites,
+        value: memorial?.favorites,
+        isArray: Array.isArray(memorial?.favorites),
+        length: Array.isArray(memorial?.favorites) ? memorial.favorites.length : 'N/A'
+      },
+      familyTree: {
+        exists: !!memorial?.familyTree,
+        type: typeof memorial?.familyTree,
+        value: memorial?.familyTree,
+        isArray: Array.isArray(memorial?.familyTree),
+        length: Array.isArray(memorial?.familyTree) ? memorial.familyTree.length : 'N/A'
+      },
+      gallery: {
+        exists: !!memorial?.gallery,
+        type: typeof memorial?.gallery,
+        value: memorial?.gallery,
+        isArray: Array.isArray(memorial?.gallery),
+        length: Array.isArray(memorial?.gallery) ? memorial.gallery.length : 'N/A'
+      },
+      memoryWall: {
+        exists: !!memorial?.memoryWall,
+        type: typeof memorial?.memoryWall,
+        value: memorial?.memoryWall,
+        isArray: Array.isArray(memorial?.memoryWall),
+        length: Array.isArray(memorial?.memoryWall) ? memorial.memoryWall.length : 'N/A'
+      },
       serviceInfo: memorial?.serviceInfo
     });
 
-    if (!memorial || memorial.userId !== userId) {
-      return c.json({ error: 'Memorial not found' }, 404);
-    }
     if (!memorial || memorial.userId !== userId) {
       return c.json({ error: 'Memorial not found' }, 404);
     }
@@ -75,10 +104,12 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
       .from(memories)
       .where(eq(memories.memorialId, memorialId));
 
+    console.log('📋 Memories from separate table:', memorialMemories.length);
+
     // Parse service info with proper typing
     const serviceInfo: ServiceInfo = memorial.serviceInfo as ServiceInfo || {};
     
-    // COMPREHENSIVE TRANSFORMATION - include ALL fields
+    // ENHANCED TRANSFORMATION with proper array handling
     const transformedMemorial = {
       ...memorial,
       service: {
@@ -89,13 +120,13 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
         virtualLink: serviceInfo.virtualLink || '',
         virtualPlatform: serviceInfo.virtualPlatform || 'zoom'
       },
-      // Ensure ALL arrays are included with defaults
-      timeline: memorial.timeline || [],
-      favorites: memorial.favorites || [],
-      familyTree: memorial.familyTree || [],
-      gallery: memorial.gallery || [],
-      memoryWall: memorial.memoryWall || [],
-      memories: memorialMemories || [], // Use memories from separate table
+      // CRITICAL FIX: Ensure arrays are properly parsed
+      timeline: parseJSONArray(memorial.timeline),
+      favorites: parseJSONArray(memorial.favorites),
+      familyTree: parseJSONArray(memorial.familyTree),
+      gallery: parseJSONArray(memorial.gallery),
+      memoryWall: parseJSONArray(memorial.memoryWall),
+      memories: memorialMemories || [],
       // Ensure all required fields have defaults
       name: memorial.name || '',
       profileImage: memorial.profileImage || '',
@@ -108,15 +139,15 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
       theme: memorial.theme || 'default'
     };
 
-    console.log('✅ Transformed memorial data for frontend:', {
+    console.log('✅ FINAL TRANSFORMED DATA:', {
       id: transformedMemorial.id,
       name: transformedMemorial.name,
-      hasTimeline: Array.isArray(transformedMemorial.timeline) ? transformedMemorial.timeline.length : 0,
-      hasFavorites: Array.isArray(transformedMemorial.favorites) ? transformedMemorial.favorites.length : 0,
-      hasFamilyTree: Array.isArray(transformedMemorial.familyTree) ? transformedMemorial.familyTree.length : 0,
-      hasGallery: Array.isArray(transformedMemorial.gallery) ? transformedMemorial.gallery.length : 0,
-      hasMemoryWall: Array.isArray(transformedMemorial.memoryWall) ? transformedMemorial.memoryWall.length : 0,
-      hasMemories: Array.isArray(transformedMemorial.memories) ? transformedMemorial.memories.length : 0,
+      timeline: Array.isArray(transformedMemorial.timeline) ? transformedMemorial.timeline.length : 'NOT ARRAY',
+      favorites: Array.isArray(transformedMemorial.favorites) ? transformedMemorial.favorites.length : 'NOT ARRAY',
+      familyTree: Array.isArray(transformedMemorial.familyTree) ? transformedMemorial.familyTree.length : 'NOT ARRAY',
+      gallery: Array.isArray(transformedMemorial.gallery) ? transformedMemorial.gallery.length : 'NOT ARRAY',
+      memoryWall: Array.isArray(transformedMemorial.memoryWall) ? transformedMemorial.memoryWall.length : 'NOT ARRAY',
+      memories: Array.isArray(transformedMemorial.memories) ? transformedMemorial.memories.length : 'NOT ARRAY',
       hasService: !!(transformedMemorial.service && transformedMemorial.service.venue)
     });
 
@@ -126,6 +157,29 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
     return c.json({ error: 'Failed to fetch memorial' }, 500);
   }
 });
+
+// ADD THIS HELPER FUNCTION to properly parse JSON arrays
+function parseJSONArray(data: any): any[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
+  
+  if (typeof data === 'string') {
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error('❌ Failed to parse JSON array:', error);
+      return [];
+    }
+  }
+  
+  if (data === null || data === undefined) {
+    return [];
+  }
+  
+  return [];
+}
 
 // NEW: Get memorial for PDF preview (PUBLIC - no auth required) - FIXED
 memorialsApp.get('/:id/pdf-data', async (c) => {
@@ -945,6 +999,70 @@ memorialsApp.get('/public/:id', async (c) => {
   } catch (error) {
     console.error('Error fetching public memorial:', error);
     return c.json({ error: 'Failed to fetch memorial' }, 500);
+  }
+});
+//debug log
+// Add this debug endpoint to check raw database data
+memorialsApp.get('/:id/debug-raw', authMiddleware, async (c) => {
+  const userId = c.get('userId');
+  const memorialId = c.req.param('id');
+
+  try {
+    const [memorial] = await db
+      .select()
+      .from(memorials)
+      .where(eq(memorials.id, memorialId));
+
+    if (!memorial || memorial.userId !== userId) {
+      return c.json({ error: 'Memorial not found' }, 404);
+    }
+
+    // Return raw database data without transformation
+    return c.json({
+      rawData: {
+        id: memorial.id,
+        name: memorial.name,
+        timeline: {
+          raw: memorial.timeline,
+          type: typeof memorial.timeline,
+          isArray: Array.isArray(memorial.timeline),
+          parsed: parseJSONArray(memorial.timeline),
+          parsedLength: parseJSONArray(memorial.timeline).length
+        },
+        favorites: {
+          raw: memorial.favorites,
+          type: typeof memorial.favorites,
+          isArray: Array.isArray(memorial.favorites),
+          parsed: parseJSONArray(memorial.favorites),
+          parsedLength: parseJSONArray(memorial.favorites).length
+        },
+        familyTree: {
+          raw: memorial.familyTree,
+          type: typeof memorial.familyTree,
+          isArray: Array.isArray(memorial.familyTree),
+          parsed: parseJSONArray(memorial.familyTree),
+          parsedLength: parseJSONArray(memorial.familyTree).length
+        },
+        gallery: {
+          raw: memorial.gallery,
+          type: typeof memorial.gallery,
+          isArray: Array.isArray(memorial.gallery),
+          parsed: parseJSONArray(memorial.gallery),
+          parsedLength: parseJSONArray(memorial.gallery).length
+        },
+        memoryWall: {
+          raw: memorial.memoryWall,
+          type: typeof memorial.memoryWall,
+          isArray: Array.isArray(memorial.memoryWall),
+          parsed: parseJSONArray(memorial.memoryWall),
+          parsedLength: parseJSONArray(memorial.memoryWall).length
+        },
+        serviceInfo: memorial.serviceInfo
+      }
+    });
+  } catch (error) {
+    console.error('Debug error:', error);
+    return c.json({ error: 'Debug failed' }, 500);
   }
 });
 export { memorialsApp };
