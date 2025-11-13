@@ -1,7 +1,7 @@
-// backend/routes/memorials.ts - WITH PDF PREVIEW ENDPOINT
+// backend/routes/memorials.ts - FIXED WITH PROPER SERVICE TYPING
 import { Hono } from 'hono';
 import { db } from '../drizzle/db.js';
-import { memorials } from '../drizzle/schema.js';
+import { memorials, memories } from '../drizzle/schema.js';
 import { eq, desc } from 'drizzle-orm';
 import { authMiddleware } from '../middleware/bearAuth.js';
 import puppeteer from 'puppeteer-core';
@@ -9,6 +9,16 @@ import chromium from '@sparticuz/chromium';
 import { generateMemorialHTML } from '../utils/pdfTemplate.js';
 
 const memorialsApp = new Hono();
+
+// Define proper types for service info
+interface ServiceInfo {
+  venue?: string;
+  address?: string;
+  date?: string;
+  time?: string;
+  virtualLink?: string;
+  virtualPlatform?: string;
+}
 
 // Get user's memorials
 memorialsApp.get('/', authMiddleware, async (c) => {
@@ -28,7 +38,7 @@ memorialsApp.get('/', authMiddleware, async (c) => {
   }
 });
 
-// Get single memorial
+// Get single memorial - FIXED WITH PROPER SERVICE TYPING
 memorialsApp.get('/:id', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const memorialId = c.req.param('id');
@@ -43,19 +53,56 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
       return c.json({ error: 'Memorial not found' }, 404);
     }
 
+    // Get memories from the separate memories table
+    const memorialMemories = await db
+      .select()
+      .from(memories)
+      .where(eq(memories.memorialId, memorialId));
+
+    // Parse service info with proper typing
+    const serviceInfo: ServiceInfo = memorial.serviceInfo as ServiceInfo || {};
+    
+    // COMPREHENSIVE TRANSFORMATION - include ALL fields
     const transformedMemorial = {
       ...memorial,
-      service: memorial.serviceInfo || {
-        venue: '',
-        address: '',
-        date: '',
-        time: '',
-        virtualLink: '',
-        virtualPlatform: 'zoom'
+      service: {
+        venue: serviceInfo.venue || '',
+        address: serviceInfo.address || '',
+        date: serviceInfo.date || '',
+        time: serviceInfo.time || '',
+        virtualLink: serviceInfo.virtualLink || '',
+        virtualPlatform: serviceInfo.virtualPlatform || 'zoom'
       },
+      // Ensure ALL arrays are included with defaults
+      timeline: memorial.timeline || [],
+      favorites: memorial.favorites || [],
+      familyTree: memorial.familyTree || [],
+      gallery: memorial.gallery || [],
       memoryWall: memorial.memoryWall || [],
-      favorites: memorial.favorites || []
+      memories: memorialMemories || [], // Use memories from separate table
+      // Ensure all required fields have defaults
+      name: memorial.name || '',
+      profileImage: memorial.profileImage || '',
+      birthDate: memorial.birthDate || '',
+      deathDate: memorial.deathDate || '',
+      location: memorial.location || '',
+      obituary: memorial.obituary || '',
+      isPublished: memorial.isPublished || false,
+      customUrl: memorial.customUrl || '',
+      theme: memorial.theme || 'default'
     };
+
+    console.log('✅ Transformed memorial data for frontend:', {
+      id: transformedMemorial.id,
+      name: transformedMemorial.name,
+      hasTimeline: Array.isArray(transformedMemorial.timeline) ? transformedMemorial.timeline.length : 0,
+      hasFavorites: Array.isArray(transformedMemorial.favorites) ? transformedMemorial.favorites.length : 0,
+      hasFamilyTree: Array.isArray(transformedMemorial.familyTree) ? transformedMemorial.familyTree.length : 0,
+      hasGallery: Array.isArray(transformedMemorial.gallery) ? transformedMemorial.gallery.length : 0,
+      hasMemoryWall: Array.isArray(transformedMemorial.memoryWall) ? transformedMemorial.memoryWall.length : 0,
+      hasMemories: Array.isArray(transformedMemorial.memories) ? transformedMemorial.memories.length : 0,
+      hasService: !!(transformedMemorial.service && transformedMemorial.service.venue)
+    });
 
     return c.json({ memorial: transformedMemorial });
   } catch (error) {
@@ -64,7 +111,7 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
   }
 });
 
-// NEW: Get memorial for PDF preview (PUBLIC - no auth required)
+// NEW: Get memorial for PDF preview (PUBLIC - no auth required) - FIXED
 memorialsApp.get('/:id/pdf-data', async (c) => {
   const memorialId = c.req.param('id');
 
@@ -86,21 +133,47 @@ memorialsApp.get('/:id/pdf-data', async (c) => {
         return c.json({ error: 'Memorial not found' }, 404);
       }
 
+      // Get memories for this memorial
+      const memorialMemories = await db
+        .select()
+        .from(memories)
+        .where(eq(memories.memorialId, memorialByUrl.id));
+
+      // Parse service info with proper typing
+      const serviceInfo: ServiceInfo = memorialByUrl.serviceInfo as ServiceInfo || {};
+
       const transformedMemorial = {
         ...memorialByUrl,
-        service: memorialByUrl.serviceInfo || {},
+        service: serviceInfo,
+        timeline: memorialByUrl.timeline || [],
+        favorites: memorialByUrl.favorites || [],
+        familyTree: memorialByUrl.familyTree || [],
+        gallery: memorialByUrl.gallery || [],
         memoryWall: memorialByUrl.memoryWall || [],
-        favorites: memorialByUrl.favorites || []
+        memories: memorialMemories || []
       };
 
       return c.json({ memorial: transformedMemorial });
     }
 
+    // Get memories for this memorial
+    const memorialMemories = await db
+      .select()
+      .from(memories)
+      .where(eq(memories.memorialId, memorial.id));
+
+    // Parse service info with proper typing
+    const serviceInfo: ServiceInfo = memorial.serviceInfo as ServiceInfo || {};
+
     const transformedMemorial = {
       ...memorial,
-      service: memorial.serviceInfo || {},
+      service: serviceInfo,
+      timeline: memorial.timeline || [],
+      favorites: memorial.favorites || [],
+      familyTree: memorial.familyTree || [],
+      gallery: memorial.gallery || [],
       memoryWall: memorial.memoryWall || [],
-      favorites: memorial.favorites || []
+      memories: memorialMemories || []
     };
 
     return c.json({ memorial: transformedMemorial });
@@ -147,19 +220,39 @@ memorialsApp.get('/:id/preview-pdf', async (c) => {
   }
 });
 
-// Helper function to generate PDF response
+// Helper function to generate PDF response - FIXED WITH PROPER SERVICE TYPING
 async function generatePDFResponse(c: any, memorial: any) {
   let browser = null;
 
   try {
+    // Get memories for this memorial
+    const memorialMemories = await db
+      .select()
+      .from(memories)
+      .where(eq(memories.memorialId, memorial.id));
+
+    // Parse service info with proper typing
+    const serviceInfo: ServiceInfo = memorial.serviceInfo as ServiceInfo || {};
+
     const memorialData = {
       ...memorial,
-      service: memorial.serviceInfo || {},
+      service: serviceInfo,
+      timeline: memorial.timeline || [],
+      favorites: memorial.favorites || [],
+      familyTree: memorial.familyTree || [],
+      gallery: memorial.gallery || [],
       memoryWall: memorial.memoryWall || [],
-      favorites: memorial.favorites || []
+      memories: memorialMemories || []
     };
 
-    console.log('🚀 Generating PDF preview for:', memorialData.name);
+    console.log('🚀 Generating PDF with complete data:', {
+      name: memorialData.name,
+      timeline: Array.isArray(memorialData.timeline) ? memorialData.timeline.length : 0,
+      favorites: Array.isArray(memorialData.favorites) ? memorialData.favorites.length : 0,
+      family: Array.isArray(memorialData.familyTree) ? memorialData.familyTree.length : 0,
+      gallery: Array.isArray(memorialData.gallery) ? memorialData.gallery.length : 0,
+      memories: Array.isArray(memorialData.memories) ? memorialData.memories.length : 0
+    });
 
     const html = generateMemorialHTML(memorialData);
 
@@ -267,7 +360,7 @@ async function generatePDFResponse(c: any, memorial: any) {
   }
 }
 
-// Create new memorial
+// Create new memorial - FIXED (no memories field needed)
 memorialsApp.post('/', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const body = await c.req.json();
@@ -292,8 +385,13 @@ memorialsApp.post('/', authMiddleware, async (c) => {
           venue: '',
           address: '',
           date: '',
-          time: ''
-        }
+          time: '',
+          virtualLink: '',
+          virtualPlatform: 'zoom'
+        },
+        theme: body.theme || 'default',
+        customUrl: body.customUrl || '',
+        isPublished: false
       })
       .returning();
 
@@ -304,7 +402,7 @@ memorialsApp.post('/', authMiddleware, async (c) => {
   }
 });
 
-// Update memorial
+// Update memorial - FIXED (no memories field needed)
 memorialsApp.put('/:id', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const memorialId = c.req.param('id');
@@ -349,7 +447,7 @@ memorialsApp.put('/:id', authMiddleware, async (c) => {
   }
 });
 
-// Generate PDF for download
+// Generate PDF for download - FIXED WITH PROPER TYPING
 memorialsApp.post('/generate-pdf', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const body = await c.req.json();
@@ -362,6 +460,13 @@ memorialsApp.post('/generate-pdf', authMiddleware, async (c) => {
     }
 
     console.log('🚀 Starting PDF generation for:', body.data.name);
+    console.log('📊 PDF data summary:', {
+      timeline: Array.isArray(body.data.timeline) ? body.data.timeline.length : 0,
+      favorites: Array.isArray(body.data.favorites) ? body.data.favorites.length : 0,
+      family: Array.isArray(body.data.familyTree) ? body.data.familyTree.length : 0,
+      gallery: Array.isArray(body.data.gallery) ? body.data.gallery.length : 0,
+      memories: Array.isArray(body.data.memoryWall) ? body.data.memoryWall.length : 0
+    });
 
     const html = generateMemorialHTML(body.data);
 
