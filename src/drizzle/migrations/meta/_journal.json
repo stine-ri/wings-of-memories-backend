@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1761407867675,
-      "tag": "0000_absent_triathlon",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1761468558022,
-      "tag": "0001_tranquil_pandemic",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1761477948861,
-      "tag": "0002_lean_rockslide",
+      "when": 1763039121857,
+      "tag": "0000_fearless_cyclops",
       "breakpoints": true
     }
   ]

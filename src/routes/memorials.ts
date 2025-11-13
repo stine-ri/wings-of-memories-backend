@@ -435,7 +435,7 @@ memorialsApp.put('/:id', authMiddleware, async (c) => {
         memoryWall: body.memoryWall,
         serviceInfo: body.service,
         theme: body.theme,
-        customUrl: body.customUrl,
+            customUrl: body.customUrl?.trim() || null,
         updatedAt: new Date(),
       })
       .where(eq(memorials.id, memorialId))

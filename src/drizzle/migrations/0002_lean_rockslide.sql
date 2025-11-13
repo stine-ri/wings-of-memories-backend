@@ -1,1 +1,0 @@
-ALTER TABLE "memorials" ADD COLUMN "memory_wall" jsonb DEFAULT '[]'::jsonb;

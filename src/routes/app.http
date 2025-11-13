@@ -1,2 +1,8 @@
-# Deploy a simple test endpoint
-curl https://your-app.vercel.app/api/debug/db-info
+# 1. First, login to get a token
+curl -X POST https://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"stine@gmail.com","password":"stine24"}'
+
+# 2. Then use the token to call the debug endpoint
+curl -X GET https://wings-of-memories-backend.onrender.com/api/memorials/debug/db-info \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
