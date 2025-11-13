@@ -420,6 +420,7 @@ memorialsApp.post('/', authMiddleware, async (c) => {
 
 // Update memorial - FIXED (no memories field needed)
 
+// backend/routes/memorials.ts - FIXED UPDATE ENDPOINT
 memorialsApp.put('/:id', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const memorialId = c.req.param('id');
@@ -437,7 +438,7 @@ memorialsApp.put('/:id', authMiddleware, async (c) => {
   });
 
   try {
-    // Get current memorial data FIRST
+    // Get current memorial data FIRST - this is CRITICAL
     const [currentMemorial] = await db
       .select()
       .from(memorials)
@@ -447,48 +448,75 @@ memorialsApp.put('/:id', authMiddleware, async (c) => {
       return c.json({ error: 'Memorial not found' }, 404);
     }
 
-    // COMPREHENSIVE DATA PRESERVATION
+    // COMPREHENSIVE DATA PRESERVATION - ALWAYS preserve existing data
     const updateData: any = {
       updatedAt: new Date(),
     };
 
-    // Preserve ALL critical fields with proper defaults
-    const fieldsToUpdate = [
+    // PRESERVE ALL FIELDS - Only update what's in the request, preserve the rest
+    const allFields = [
       'name', 'profileImage', 'birthDate', 'deathDate', 'location', 
       'obituary', 'theme', 'customUrl', 'isPublished'
     ];
 
-    fieldsToUpdate.forEach(field => {
+    allFields.forEach(field => {
       if (field in body) {
-        updateData[field] = body[field] || null;
+        // Update with new value if provided
+        updateData[field] = body[field] !== undefined ? body[field] : currentMemorial[field as keyof typeof currentMemorial];
+      } else {
+        // PRESERVE existing value if not in request
+        updateData[field] = currentMemorial[field as keyof typeof currentMemorial];
       }
     });
 
-    // CRITICAL: Always preserve arrays, never let them become undefined
+    // CRITICAL: Always preserve arrays - NEVER let them become undefined
     const arrayFields = ['timeline', 'favorites', 'familyTree', 'gallery', 'memoryWall'];
     arrayFields.forEach(field => {
       if (field in body) {
+        // Update with new array if provided
         updateData[field] = Array.isArray(body[field]) ? body[field] : [];
       } else {
-        // If field not in request, preserve existing data
+        // PRESERVE existing array if not in request
         updateData[field] = currentMemorial[field as keyof typeof currentMemorial] || [];
       }
     });
 
-    // Handle service info separately
+    // Handle service info separately - PRESERVE existing service info
     if (body.service || body.serviceInfo) {
       const currentService = currentMemorial.serviceInfo as ServiceInfo || {};
       const newService = body.service || body.serviceInfo || {};
       
       updateData.serviceInfo = {
-        venue: newService.venue || currentService.venue || '',
-        address: newService.address || currentService.address || '',
-        date: newService.date || currentService.date || '',
-        time: newService.time || currentService.time || '',
-        virtualLink: newService.virtualLink || currentService.virtualLink || '',
-        virtualPlatform: newService.virtualPlatform || currentService.virtualPlatform || 'zoom'
+        // Only update fields that are provided, preserve others
+        venue: newService.venue !== undefined ? newService.venue : currentService.venue || '',
+        address: newService.address !== undefined ? newService.address : currentService.address || '',
+        date: newService.date !== undefined ? newService.date : currentService.date || '',
+        time: newService.time !== undefined ? newService.time : currentService.time || '',
+        virtualLink: newService.virtualLink !== undefined ? newService.virtualLink : currentService.virtualLink || '',
+        virtualPlatform: newService.virtualPlatform !== undefined ? newService.virtualPlatform : currentService.virtualPlatform || 'zoom'
       };
+    } else {
+      // PRESERVE existing service info if not in request
+      updateData.serviceInfo = currentMemorial.serviceInfo;
     }
+
+    // VALIDATE: Ensure no data is lost
+    console.log('🔍 DATA VALIDATION - Before vs After:', {
+      before: {
+        timeline: Array.isArray(currentMemorial.timeline) ? currentMemorial.timeline.length : 0,
+        favorites: Array.isArray(currentMemorial.favorites) ? currentMemorial.favorites.length : 0,
+        familyTree: Array.isArray(currentMemorial.familyTree) ? currentMemorial.familyTree.length : 0,
+        gallery: Array.isArray(currentMemorial.gallery) ? currentMemorial.gallery.length : 0,
+        memoryWall: Array.isArray(currentMemorial.memoryWall) ? currentMemorial.memoryWall.length : 0,
+      },
+      after: {
+        timeline: Array.isArray(updateData.timeline) ? updateData.timeline.length : 0,
+        favorites: Array.isArray(updateData.favorites) ? updateData.favorites.length : 0,
+        familyTree: Array.isArray(updateData.familyTree) ? updateData.familyTree.length : 0,
+        gallery: Array.isArray(updateData.gallery) ? updateData.gallery.length : 0,
+        memoryWall: Array.isArray(updateData.memoryWall) ? updateData.memoryWall.length : 0,
+      }
+    });
 
     console.log('💾 FINAL UPDATE DATA:', {
       timelineLength: Array.isArray(updateData.timeline) ? updateData.timeline.length : 0,
