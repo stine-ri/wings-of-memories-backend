@@ -419,7 +419,7 @@ memorialsApp.post('/', authMiddleware, async (c) => {
 });
 
 // Update memorial - FIXED (no memories field needed)
-// In your backend memorials.ts - UPDATE THE PUT ENDPOINT
+
 memorialsApp.put('/:id', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const memorialId = c.req.param('id');
@@ -732,8 +732,6 @@ memorialsApp.get('/debug/user-memorials', authMiddleware, async (c) => {
 
 });
 
-// Add this new route to your backend memorials.ts file
-
 // NEW: Generate preview PDF with complete data (requires auth)
 memorialsApp.post('/generate-preview-pdf', authMiddleware, async (c) => {
   const userId = c.get('userId');
@@ -880,4 +878,45 @@ memorialsApp.post('/generate-preview-pdf', authMiddleware, async (c) => {
   }
 });
 
+//  PUBLIC MEMORIAL ROUTE
+memorialsApp.get('/public/:id', async (c) => {
+  const memorialId = c.req.param('id');
+
+  try {
+    // Try to find by ID or customUrl
+    const [memorial] = await db
+      .select()
+      .from(memorials)
+      .where(eq(memorials.id, memorialId));
+
+    if (!memorial) {
+      // Try by customUrl
+      const [memorialByUrl] = await db
+        .select()
+        .from(memorials)
+        .where(eq(memorials.customUrl, memorialId));
+
+      if (!memorialByUrl) {
+        return c.json({ error: 'Memorial not found' }, 404);
+      }
+
+      // Only return published memorials
+      if (!memorialByUrl.isPublished) {
+        return c.json({ error: 'Memorial is not published' }, 403);
+      }
+
+      return c.json({ memorial: memorialByUrl });
+    }
+
+    // Only return published memorials
+    if (!memorial.isPublished) {
+      return c.json({ error: 'Memorial is not published' }, 403);
+    }
+
+    return c.json({ memorial });
+  } catch (error) {
+    console.error('Error fetching public memorial:', error);
+    return c.json({ error: 'Failed to fetch memorial' }, 500);
+  }
+});
 export { memorialsApp };
