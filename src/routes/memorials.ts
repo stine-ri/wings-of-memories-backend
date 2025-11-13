@@ -50,6 +50,21 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
       .from(memorials)
       .where(eq(memorials.id, memorialId));
 
+  // ADD THIS DEBUG LOGGING
+    console.log('🗄️ Database memorial data:', {
+      id: memorial?.id,
+      name: memorial?.name,
+      timelineLength: memorial && Array.isArray(memorial.timeline) ? memorial.timeline.length : 0,
+      favoritesLength: memorial && Array.isArray(memorial.favorites) ? memorial.favorites.length : 0,
+      familyTreeLength: memorial && Array.isArray(memorial.familyTree) ? memorial.familyTree.length : 0,
+      galleryLength: memorial && Array.isArray(memorial.gallery) ? memorial.gallery.length : 0,
+      memoryWallLength: memorial && Array.isArray(memorial.memoryWall) ? memorial.memoryWall.length : 0,
+      serviceInfo: memorial?.serviceInfo
+    });
+
+    if (!memorial || memorial.userId !== userId) {
+      return c.json({ error: 'Memorial not found' }, 404);
+    }
     if (!memorial || memorial.userId !== userId) {
       return c.json({ error: 'Memorial not found' }, 404);
     }
@@ -409,6 +424,15 @@ memorialsApp.put('/:id', authMiddleware, async (c) => {
   const memorialId = c.req.param('id');
   const body = await c.req.json();
 
+    console.log('📥 Received update data:', {
+    timelineLength: Array.isArray(body.timeline) ? body.timeline.length : 0,
+    favoritesLength: Array.isArray(body.favorites) ? body.favorites.length : 0,
+    familyTreeLength: Array.isArray(body.familyTree) ? body.familyTree.length : 0,
+    galleryLength: Array.isArray(body.gallery) ? body.gallery.length : 0,
+    memoryWallLength: Array.isArray(body.memoryWall) ? body.memoryWall.length : 0,
+    serviceInfo: body.serviceInfo
+  });
+  
   try {
     const [existingMemorial] = await db
       .select()
