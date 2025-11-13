@@ -419,81 +419,83 @@ memorialsApp.post('/', authMiddleware, async (c) => {
 });
 
 // Update memorial - FIXED (no memories field needed)
-// Update memorial - COMPREHENSIVE FIX
+// In your backend memorials.ts - UPDATE THE PUT ENDPOINT
 memorialsApp.put('/:id', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const memorialId = c.req.param('id');
   
-  // Log RAW request body first
-  const rawBody = await c.req.text();
-  console.log('🔍 RAW request body received:', rawBody.substring(0, 500) + '...');
-  
-  const body = JSON.parse(rawBody);
+  const body = await c.req.json();
 
-  console.log('📥 Received update data - COMPLETE ANALYSIS:', {
-    // Check ALL expected fields
-    hasName: 'name' in body,
-    hasTimeline: 'timeline' in body,
-    hasFavorites: 'favorites' in body, 
-    hasFamilyTree: 'familyTree' in body,
-    hasGallery: 'gallery' in body,
-    hasMemoryWall: 'memoryWall' in body,
-    hasService: 'service' in body,
-    hasServiceInfo: 'serviceInfo' in body,
-    // Array lengths
-    timelineLength: Array.isArray(body.timeline) ? body.timeline.length : 'NOT ARRAY/MISSING',
-    favoritesLength: Array.isArray(body.favorites) ? body.favorites.length : 'NOT ARRAY/MISSING',
-    familyTreeLength: Array.isArray(body.familyTree) ? body.familyTree.length : 'NOT ARRAY/MISSING',
-    galleryLength: Array.isArray(body.gallery) ? body.gallery.length : 'NOT ARRAY/MISSING',
-    memoryWallLength: Array.isArray(body.memoryWall) ? body.memoryWall.length : 'NOT ARRAY/MISSING',
-    // All keys for debugging
-    allKeys: Object.keys(body)
+  console.log('📥 UPDATE REQUEST - Complete analysis:', {
+    memorialId,
+    bodyKeys: Object.keys(body),
+    timeline: Array.isArray(body.timeline) ? body.timeline.length : 'missing/not-array',
+    favorites: Array.isArray(body.favorites) ? body.favorites.length : 'missing/not-array',
+    familyTree: Array.isArray(body.familyTree) ? body.familyTree.length : 'missing/not-array',
+    gallery: Array.isArray(body.gallery) ? body.gallery.length : 'missing/not-array',
+    memoryWall: Array.isArray(body.memoryWall) ? body.memoryWall.length : 'missing/not-array'
   });
-  
+
   try {
-    const [existingMemorial] = await db
+    // Get current memorial data FIRST
+    const [currentMemorial] = await db
       .select()
       .from(memorials)
       .where(eq(memorials.id, memorialId));
 
-    if (!existingMemorial || existingMemorial.userId !== userId) {
+    if (!currentMemorial || currentMemorial.userId !== userId) {
       return c.json({ error: 'Memorial not found' }, 404);
     }
 
-    // COMPREHENSIVE DATA VALIDATION - Ensure ALL fields are preserved
-    const updateData = {
-      name: body.name || existingMemorial.name,
-      profileImage: body.profileImage || existingMemorial.profileImage,
-      birthDate: body.birthDate || existingMemorial.birthDate,
-      deathDate: body.deathDate || existingMemorial.deathDate,
-      location: body.location || existingMemorial.location,
-      obituary: body.obituary || existingMemorial.obituary,
-      // CRITICAL: Always preserve arrays, even if empty or missing in request
-      timeline: Array.isArray(body.timeline) ? body.timeline : (existingMemorial.timeline || []),
-      favorites: Array.isArray(body.favorites) ? body.favorites : (existingMemorial.favorites || []),
-      familyTree: Array.isArray(body.familyTree) ? body.familyTree : (existingMemorial.familyTree || []),
-      gallery: Array.isArray(body.gallery) ? body.gallery : (existingMemorial.gallery || []),
-      memoryWall: Array.isArray(body.memoryWall) ? body.memoryWall : (existingMemorial.memoryWall || []),
-      // Handle service info properly
-      serviceInfo: body.service || body.serviceInfo || existingMemorial.serviceInfo || {
-        venue: '',
-        address: '',
-        date: '',
-        time: '',
-        virtualLink: '',
-        virtualPlatform: 'zoom'
-      },
-      theme: body.theme || existingMemorial.theme,
-      customUrl: body.customUrl?.trim() || null,
+    // COMPREHENSIVE DATA PRESERVATION
+    const updateData: any = {
       updatedAt: new Date(),
     };
 
-    console.log('💾 Final update data to database:', {
-      timelineLength: updateData.timeline.length,
-      favoritesLength: updateData.favorites.length,
-      familyTreeLength: updateData.familyTree.length,
-      galleryLength: updateData.gallery.length,
-      memoryWallLength: updateData.memoryWall.length,
+    // Preserve ALL critical fields with proper defaults
+    const fieldsToUpdate = [
+      'name', 'profileImage', 'birthDate', 'deathDate', 'location', 
+      'obituary', 'theme', 'customUrl', 'isPublished'
+    ];
+
+    fieldsToUpdate.forEach(field => {
+      if (field in body) {
+        updateData[field] = body[field] || null;
+      }
+    });
+
+    // CRITICAL: Always preserve arrays, never let them become undefined
+    const arrayFields = ['timeline', 'favorites', 'familyTree', 'gallery', 'memoryWall'];
+    arrayFields.forEach(field => {
+      if (field in body) {
+        updateData[field] = Array.isArray(body[field]) ? body[field] : [];
+      } else {
+        // If field not in request, preserve existing data
+        updateData[field] = currentMemorial[field as keyof typeof currentMemorial] || [];
+      }
+    });
+
+    // Handle service info separately
+    if (body.service || body.serviceInfo) {
+      const currentService = currentMemorial.serviceInfo as ServiceInfo || {};
+      const newService = body.service || body.serviceInfo || {};
+      
+      updateData.serviceInfo = {
+        venue: newService.venue || currentService.venue || '',
+        address: newService.address || currentService.address || '',
+        date: newService.date || currentService.date || '',
+        time: newService.time || currentService.time || '',
+        virtualLink: newService.virtualLink || currentService.virtualLink || '',
+        virtualPlatform: newService.virtualPlatform || currentService.virtualPlatform || 'zoom'
+      };
+    }
+
+    console.log('💾 FINAL UPDATE DATA:', {
+      timelineLength: Array.isArray(updateData.timeline) ? updateData.timeline.length : 0,
+      favoritesLength: Array.isArray(updateData.favorites) ? updateData.favorites.length : 0,
+      familyTreeLength: Array.isArray(updateData.familyTree) ? updateData.familyTree.length : 0,
+      galleryLength: Array.isArray(updateData.gallery) ? updateData.gallery.length : 0,
+      memoryWallLength: Array.isArray(updateData.memoryWall) ? updateData.memoryWall.length : 0,
       hasServiceInfo: !!updateData.serviceInfo
     });
 
@@ -504,8 +506,9 @@ memorialsApp.put('/:id', authMiddleware, async (c) => {
       .returning();
 
     return c.json({ memorial: updatedMemorial });
+
   } catch (error) {
-    console.error('❌ Error updating memorial:', error);
+    console.error('❌ Update error:', error);
     return c.json({ error: 'Failed to update memorial' }, 500);
   }
 });
