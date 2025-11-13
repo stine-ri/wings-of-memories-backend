@@ -1,4 +1,4 @@
-// backend/utils/pdfTemplate.ts - WARM & COMFORTING MEMORIAL BOOKLET
+// backend/utils/pdfTemplate.ts - ELEGANT & SOPHISTICATED MEMORIAL BOOKLET
 export function generateMemorialHTML(memorialData: any): string {
   const {
     name = 'Memorial',
@@ -30,6 +30,19 @@ export function generateMemorialHTML(memorialData: any): string {
     }
   };
 
+  // Calculate age if both dates available
+  const calculateAge = () => {
+    if (!birthDate || !deathDate) return '';
+    try {
+      const birth = new Date(birthDate);
+      const death = new Date(deathDate);
+      const age = death.getFullYear() - birth.getFullYear();
+      return age > 0 ? `${age} years` : '';
+    } catch {
+      return '';
+    }
+  };
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -38,7 +51,7 @@ export function generateMemorialHTML(memorialData: any): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>In Loving Memory of ${name}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Open+Sans:wght@300;400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Montserrat:wght@300;400;500;600&display=swap');
     
     * {
       margin: 0;
@@ -54,25 +67,26 @@ export function generateMemorialHTML(memorialData: any): string {
     body {
       margin: 0;
       padding: 0;
-      font-family: 'Open Sans', sans-serif;
+      font-family: 'Cormorant Garamond', serif;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
-      background: linear-gradient(to bottom, #fdfbf7 0%, #f9f6f1 100%);
-      line-height: 1.7;
-      color: #4a5568;
-      font-size: 14px;
+      background: linear-gradient(135deg, #fdfbf7 0%, #f5ede3 50%, #fdfbf7 100%);
+      line-height: 1.8;
+      color: #3a3a3a;
+      font-size: 15px;
     }
 
-    /* Warm, comforting color scheme */
+    /* Elegant, sophisticated color scheme */
     :root {
-      --primary: #9b8579;
-      --secondary: #d4c5b9;
-      --accent: #b8a394;
-      --warm-light: #fdfbf7;
-      --warm-cream: #f9f6f1;
-      --soft-text: #6b7280;
-      --gentle-border: #e8dfd6;
-      --comfort-blue: #a8c5da;
+      --gold: #d4af37;
+      --deep-blue: #1a2332;
+      --rose-gold: #e6c3a1;
+      --cream: #fdfbf7;
+      --warm-cream: #f5ede3;
+      --soft-text: #5a5a5a;
+      --border-gold: #c4a747;
+      --accent-blue: #4a6fa5;
+      --light-shadow: rgba(0, 0, 0, 0.1);
     }
 
     /* Page breaks and layout */
@@ -88,15 +102,28 @@ export function generateMemorialHTML(memorialData: any): string {
 
     .section-divider {
       height: 1px;
-      background: linear-gradient(90deg, transparent, var(--gentle-border), transparent);
-      margin: 2.5rem 0;
-      opacity: 0.5;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 3rem 0;
+      opacity: 0.6;
+      position: relative;
     }
 
-    /* COVER PAGE - Soft and welcoming */
+    .section-divider::after {
+      content: '◆';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--cream);
+      padding: 0 1rem;
+      color: var(--gold);
+      font-size: 1rem;
+    }
+
+    /* COVER PAGE - Elegant and prestigious */
     .cover-page {
       min-height: 100vh;
-      background: linear-gradient(135deg, #fdfbf7 0%, #f5ede3 50%, #f9f6f1 100%);
+      background: linear-gradient(135deg, #1a2332 0%, #2c3e50 50%, #1a2332 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -114,68 +141,122 @@ export function generateMemorialHTML(memorialData: any): string {
       left: 0;
       right: 0;
       bottom: 0;
-      background: radial-gradient(circle at 30% 50%, rgba(168, 197, 218, 0.08) 0%, transparent 50%),
-                  radial-gradient(circle at 70% 50%, rgba(212, 197, 185, 0.08) 0%, transparent 50%);
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(230, 195, 161, 0.08) 0%, transparent 50%);
+      animation: pulse 8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.8; }
+    }
+
+    /* Decorative corners */
+    .cover-page::after {
+      content: '';
+      position: absolute;
+      top: 2rem;
+      left: 2rem;
+      right: 2rem;
+      bottom: 2rem;
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+      opacity: 0.3;
+      pointer-events: none;
     }
 
     .memorial-title {
-      font-family: 'Lora', serif;
-      font-size: 1.1rem;
-      color: var(--primary);
-      letter-spacing: 0.25em;
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      color: var(--gold);
+      letter-spacing: 0.3em;
       text-transform: uppercase;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
       font-weight: 400;
-      opacity: 0.9;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 1;
     }
 
     .cover-name {
-      font-family: 'Lora', serif;
-      font-size: 3.2rem;
+      font-family: 'Cinzel', serif;
+      font-size: 3.8rem;
       font-weight: 600;
-      color: #5a5147;
+      color: var(--cream);
       margin: 2rem 0;
       line-height: 1.2;
       position: relative;
+      z-index: 1;
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      letter-spacing: 0.02em;
     }
 
-    .cover-name::after {
-      content: '';
-      position: absolute;
-      bottom: -1.2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 120px;
+    .ornamental-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin: 2rem 0;
+      color: var(--gold);
+      font-size: 1.5rem;
+      opacity: 0.8;
+    }
+
+    .ornamental-line {
+      width: 80px;
       height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
     }
 
     .cover-dates {
-      font-size: 1.3rem;
-      color: var(--soft-text);
+      font-size: 1.5rem;
+      color: var(--rose-gold);
       font-style: italic;
-      margin-bottom: 1rem;
-      font-family: 'Lora', serif;
+      margin-bottom: 0.5rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 500;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover-age {
+      font-size: 1.1rem;
+      color: var(--rose-gold);
+      font-style: italic;
+      margin-bottom: 1.5rem;
+      opacity: 0.9;
+      position: relative;
+      z-index: 1;
     }
 
     .cover-location {
-      font-size: 1rem;
-      color: var(--soft-text);
+      font-size: 1.1rem;
+      color: var(--rose-gold);
       margin-bottom: 3rem;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      position: relative;
+      z-index: 1;
     }
 
     .cover-quote {
-      font-size: 1.05rem;
-      color: #6b7280;
+      font-size: 1.15rem;
+      color: var(--cream);
       font-style: italic;
-      max-width: 450px;
-      margin: 2.5rem auto 0;
-      line-height: 1.9;
-      font-family: 'Lora', serif;
-      padding: 2rem;
-      background: rgba(255, 255, 255, 0.4);
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      max-width: 500px;
+      margin: 3rem auto 0;
+      line-height: 2;
+      font-family: 'Cormorant Garamond', serif;
+      padding: 2.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 1;
     }
 
     /* CONTENT PAGES */
@@ -185,68 +266,97 @@ export function generateMemorialHTML(memorialData: any): string {
 
     .section-header {
       text-align: center;
-      margin-bottom: 3rem;
+      margin-bottom: 3.5rem;
     }
 
     .section-title {
-      font-family: 'Lora', serif;
-      font-size: 2.4rem;
+      font-family: 'Cinzel', serif;
+      font-size: 2.8rem;
       font-weight: 600;
-      color: #5a5147;
-      margin-bottom: 1.2rem;
+      color: var(--deep-blue);
+      margin-bottom: 1.5rem;
       position: relative;
       display: inline-block;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.05em;
     }
 
     .section-title::after {
       content: '';
       position: absolute;
-      bottom: -0.7rem;
+      bottom: -1rem;
       left: 50%;
       transform: translateX(-50%);
-      width: 80px;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-      opacity: 0.6;
+      width: 100px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .section-title::before {
+      content: '◆';
+      position: absolute;
+      bottom: -1.7rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--gold);
+      font-size: 0.8rem;
     }
 
     .section-subtitle {
-      font-size: 1.05rem;
+      font-size: 1.2rem;
       color: var(--soft-text);
       font-style: italic;
-      margin-top: 1.2rem;
-      font-weight: 300;
-      letter-spacing: 0.01em;
+      margin-top: 2rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      font-family: 'Cormorant Garamond', serif;
     }
 
     /* PROFILE SECTION */
     .profile-section {
       text-align: center;
-      max-width: 600px;
+      max-width: 650px;
       margin: 0 auto;
     }
 
     .profile-image-container {
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
+      position: relative;
     }
 
     .profile-image {
-      width: 200px;
-      height: 200px;
+      width: 220px;
+      height: 220px;
       border-radius: 50%;
       object-fit: cover;
-      border: 6px solid white;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      border: 8px solid white;
+      box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.15),
+        0 0 0 2px var(--gold);
+      position: relative;
+    }
+
+    .profile-image-container::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      border: 1px solid var(--gold);
+      opacity: 0.3;
     }
 
     .profile-placeholder {
-      width: 200px;
-      height: 200px;
+      width: 220px;
+      height: 220px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #f9f6f1, #e8dfd6);
-      border: 6px solid white;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      background: linear-gradient(135deg, var(--warm-cream), #e8dfd6);
+      border: 8px solid white;
+      box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.15),
+        0 0 0 2px var(--gold);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -254,239 +364,280 @@ export function generateMemorialHTML(memorialData: any): string {
     }
 
     .profile-icon {
-      width: 70px;
-      height: 70px;
-      color: var(--primary);
-      opacity: 0.6;
+      width: 80px;
+      height: 80px;
+      color: var(--gold);
+      opacity: 0.5;
     }
 
     .profile-name {
-      font-family: 'Lora', serif;
-      font-size: 2.2rem;
+      font-family: 'Cinzel', serif;
+      font-size: 2.6rem;
       font-weight: 600;
-      color: #5a5147;
-      margin-bottom: 1rem;
+      color: var(--deep-blue);
+      margin-bottom: 1.2rem;
+      letter-spacing: 0.02em;
     }
 
     .profile-dates {
-      font-family: 'Lora', serif;
-      font-size: 1.2rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
       color: var(--soft-text);
       font-style: italic;
-      margin-bottom: 1rem;
+      margin-bottom: 0.8rem;
+      font-weight: 500;
     }
 
     .profile-location {
-      font-size: 1rem;
+      font-size: 1.1rem;
       color: var(--soft-text);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 400;
     }
 
     /* OBITUARY SECTION */
     .obituary-section {
-      max-width: 700px;
+      max-width: 750px;
       margin: 0 auto;
+      position: relative;
+    }
+
+    .obituary-section::before {
+      content: '';
+      position: absolute;
+      top: -2rem;
+      right: -2rem;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.08), transparent);
+      border-radius: 50%;
+      z-index: 0;
     }
 
     .obituary-content {
-      font-size: 1.05rem;
-      line-height: 1.9;
-      color: #5a5a5a;
+      font-size: 1.15rem;
+      line-height: 2;
+      color: #3a3a3a;
       text-align: justify;
       background: white;
-      padding: 2.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      padding: 3rem 3.5rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      border-top: 4px solid var(--gold);
+      position: relative;
+      z-index: 1;
     }
 
     .obituary-content p {
-      margin-bottom: 1.5rem;
-      text-indent: 2rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .obituary-content p:first-of-type::first-letter {
+      font-size: 4.5rem;
+      font-weight: 600;
+      float: left;
+      line-height: 0.8;
+      margin: 0.1rem 0.8rem 0 0;
+      color: var(--gold);
+      font-family: 'Cinzel', serif;
     }
 
     /* TIMELINE SECTION */
     .timeline-section {
-      max-width: 800px;
+      max-width: 850px;
       margin: 0 auto;
     }
 
     .timeline {
       position: relative;
-      padding-left: 3rem;
+      padding-left: 4rem;
     }
 
     .timeline::before {
       content: '';
       position: absolute;
-      left: 1.5rem;
+      left: 2rem;
       top: 0;
       bottom: 0;
-      width: 2px;
-      background: linear-gradient(to bottom, var(--comfort-blue), var(--secondary));
-      opacity: 0.4;
+      width: 3px;
+      background: linear-gradient(to bottom, var(--gold), var(--rose-gold), var(--gold));
+      opacity: 0.5;
     }
 
     .timeline-item {
       position: relative;
-      margin-bottom: 2.5rem;
-      padding-left: 2rem;
+      margin-bottom: 3rem;
+      padding-left: 2.5rem;
     }
 
     .timeline-marker {
       position: absolute;
-      left: -2.5rem;
+      left: -3.2rem;
       top: 0;
-      width: 3rem;
-      height: 3rem;
-      background: linear-gradient(135deg, var(--comfort-blue), var(--secondary));
+      width: 4rem;
+      height: 4rem;
+      background: linear-gradient(135deg, var(--gold), var(--rose-gold));
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
       font-weight: 600;
-      font-size: 0.85rem;
-      box-shadow: 0 4px 15px rgba(168, 197, 218, 0.3);
+      font-size: 0.95rem;
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+      border: 4px solid white;
+      font-family: 'Montserrat', sans-serif;
     }
 
     .timeline-content {
       background: white;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-      border-left: 3px solid var(--comfort-blue);
+      padding: 2.5rem;
+      border-radius: 16px;
+      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.08);
+      border-left: 4px solid var(--gold);
     }
 
     .timeline-year {
-      font-size: 1rem;
+      font-size: 1.1rem;
       font-weight: 600;
-      color: var(--primary);
-      margin-bottom: 0.5rem;
+      color: var(--gold);
+      margin-bottom: 0.8rem;
+      font-family: 'Montserrat', sans-serif;
+      letter-spacing: 0.05em;
     }
 
     .timeline-title {
-      font-family: 'Lora', serif;
-      font-size: 1.25rem;
+      font-family: 'Cinzel', serif;
+      font-size: 1.5rem;
       font-weight: 600;
-      color: #5a5147;
-      margin-bottom: 1rem;
+      color: var(--deep-blue);
+      margin-bottom: 1.2rem;
+      letter-spacing: 0.01em;
     }
 
     .timeline-description {
-      color: #5a5a5a;
-      line-height: 1.8;
-      margin-bottom: 1rem;
+      color: #3a3a3a;
+      line-height: 1.9;
+      margin-bottom: 1.2rem;
+      font-size: 1.05rem;
     }
 
     .timeline-location {
       color: var(--soft-text);
-      font-size: 0.9rem;
+      font-size: 1rem;
       font-style: italic;
     }
 
     /* FAVORITES SECTION */
     .favorites-section {
-      max-width: 800px;
+      max-width: 850px;
       margin: 0 auto;
     }
 
     .favorites-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
     }
 
     .favorite-card {
-      background: white;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-      border-top: 3px solid var(--comfort-blue);
+      background: linear-gradient(135deg, white, #fdfbf7);
+      padding: 2.5rem;
+      border-radius: 16px;
+      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.08);
+      border-top: 4px solid var(--gold);
       text-align: center;
       transition: transform 0.2s;
     }
 
     .favorite-icon {
-      font-size: 3rem;
-      margin-bottom: 1.2rem;
-      filter: saturate(0.8) brightness(1.1);
-      line-height: 1;
-      height: 3.5rem;
+      font-size: 3.5rem;
+      margin-bottom: 1.5rem;
+      height: 4rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--primary); 
+      color: var(--gold); 
     }
 
     .favorite-icon svg {
-     width: 48px;
-     height: 48px;
-     color: inherit; /* Inherit the primary color */
+     width: 56px;
+     height: 56px;
+     color: inherit;
      opacity: 0.85;
+     filter: drop-shadow(0 4px 8px rgba(212, 175, 55, 0.2));
     }
+
     .favorite-category {
-      font-family: 'Lora', serif;
-      font-size: 1.15rem;
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
       font-weight: 600;
-      color: var(--primary);
-      margin-bottom: 1rem;
+      color: var(--deep-blue);
+      margin-bottom: 1.2rem;
       text-transform: capitalize;
+      letter-spacing: 0.02em;
     }
 
     .favorite-text {
-      color: #5a5a5a;
-      line-height: 1.7;
+      color: #3a3a3a;
+      line-height: 1.8;
       font-style: italic;
+      font-size: 1.05rem;
     }
 
     /* FAMILY SECTION */
     .family-section {
-      max-width: 800px;
+      max-width: 850px;
       margin: 0 auto;
     }
 
     .family-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 2rem;
     }
 
     .family-member {
       background: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.08);
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 1.5rem;
+      border-left: 3px solid var(--gold);
     }
 
     .family-image {
-      width: 65px;
-      height: 65px;
+      width: 75px;
+      height: 75px;
       border-radius: 50%;
       object-fit: cover;
-      border: 3px solid var(--gentle-border);
+      border: 3px solid var(--gold);
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
     }
 
     .family-placeholder {
-      width: 65px;
-      height: 65px;
+      width: 75px;
+      height: 75px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #f9f6f1, #e8dfd6);
+      background: linear-gradient(135deg, var(--warm-cream), #e8dfd6);
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 3px solid var(--gentle-border);
+      border: 3px solid var(--gold);
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
     }
 
     .family-initials {
-      color: var(--primary);
+      color: var(--gold);
       font-weight: 600;
-      font-size: 1rem;
+      font-size: 1.1rem;
+      font-family: 'Montserrat', sans-serif;
     }
 
     .family-info {
@@ -495,116 +646,137 @@ export function generateMemorialHTML(memorialData: any): string {
 
     .family-name {
       font-weight: 600;
-      color: #5a5147;
-      font-size: 1.05rem;
-      margin-bottom: 0.25rem;
+      color: var(--deep-blue);
+      font-size: 1.15rem;
+      margin-bottom: 0.4rem;
+      font-family: 'Montserrat', sans-serif;
     }
 
     .family-relation {
       color: var(--soft-text);
-      font-size: 0.9rem;
+      font-size: 1rem;
       text-transform: capitalize;
+      font-style: italic;
     }
 
-   /* GALLERY SECTION - Updated styles */
-.gallery-section {
-  max-width: 800px;
-  margin: 0 auto;
-}
+    /* GALLERY SECTION */
+    .gallery-section {
+      max-width: 850px;
+      margin: 0 auto;
+    }
 
-.gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-bottom: 2.5rem;
+    }
 
-.gallery-item {
-  aspect-ratio: 1;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  background: white;
-  padding: 0.75rem;
-}
+    .gallery-item {
+      aspect-ratio: 1;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.12);
+      background: white;
+      padding: 1rem;
+      border: 2px solid var(--warm-cream);
+    }
 
-.gallery-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
-}
+    .gallery-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
 
-.gallery-placeholder {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #f9f6f1, #e8dfd6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-}
+    .gallery-placeholder {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--warm-cream), #e8dfd6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+    }
 
-/* Add these new styles for category organization */
-.gallery-category {
-  page-break-inside: avoid;
-  break-inside: avoid;
-}
+    .gallery-category {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      margin-bottom: 3.5rem;
+    }
 
-.gallery-category-title {
-  font-family: 'Lora', serif;
-  font-size: 1.4rem;
-  color: var(--primary);
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--gentle-border);
-  text-align: center;
-  text-transform: capitalize;
-}
+    .gallery-category-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.6rem;
+      color: var(--deep-blue);
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--gold);
+      text-align: center;
+      text-transform: capitalize;
+      letter-spacing: 0.05em;
+      position: relative;
+    }
 
-.gallery-caption {
-  margin-top: 0.75rem;
-  text-align: center;
-  font-size: 0.85rem;
-  color: var(--soft-text);
-  line-height: 1.4;
-  padding: 0 0.5rem;
-}
+    .gallery-category-title::after {
+      content: '◆';
+      position: absolute;
+      bottom: -0.7rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--cream);
+      padding: 0 0.8rem;
+      color: var(--gold);
+      font-size: 0.8rem;
+    }
+
+    .gallery-caption {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--soft-text);
+      line-height: 1.5;
+      padding: 0 0.5rem;
+      font-style: italic;
+    }
+
     /* MEMORIES SECTION */
     .memories-section {
-      max-width: 700px;
+      max-width: 750px;
       margin: 0 auto;
     }
 
     .memory-card {
       background: white;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-      margin-bottom: 1.5rem;
-      border-left: 3px solid var(--comfort-blue);
+      padding: 2.5rem;
+      border-radius: 16px;
+      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.08);
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--gold);
+      position: relative;
     }
 
     .memory-text {
-      font-family: 'Lora', serif;
-      font-size: 1.05rem;
-      line-height: 1.8;
-      color: #5a5a5a;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      line-height: 2;
+      color: #3a3a3a;
       font-style: italic;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
       position: relative;
-      padding-left: 1.5rem;
+      padding-left: 2rem;
     }
 
     .memory-text::before {
       content: '"';
-      font-size: 2.5rem;
-      color: var(--secondary);
+      font-size: 5rem;
+      color: var(--gold);
       position: absolute;
-      left: -0.5rem;
-      top: -0.8rem;
-      opacity: 0.4;
+      left: -1rem;
+      top: -2rem;
+      opacity: 0.2;
       font-family: Georgia, serif;
+      line-height: 1;
     }
 
     .memory-footer {
@@ -612,31 +784,46 @@ export function generateMemorialHTML(memorialData: any): string {
       justify-content: space-between;
       align-items: center;
       color: var(--soft-text);
-      font-size: 0.9rem;
+      font-size: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--warm-cream);
     }
 
     .memory-author {
       font-weight: 600;
-      color: var(--primary);
+      color: var(--deep-blue);
+      font-family: 'Montserrat', sans-serif;
     }
 
     /* SERVICE SECTION */
     .service-section {
-      max-width: 600px;
+      max-width: 650px;
       margin: 0 auto;
     }
 
     .service-card {
       background: white;
-      padding: 2.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      padding: 3rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      border-top: 4px solid var(--gold);
     }
 
     .service-item {
-      margin-bottom: 2rem;
-      padding-bottom: 2rem;
-      border-bottom: 1px solid var(--gentle-border);
+      margin-bottom: 2.5rem;
+      padding-bottom: 2.5rem;
+      border-bottom: 1px solid var(--warm-cream);
+      position: relative;
+      padding-left: 2rem;
+    }
+
+    .service-item::before {
+      content: '◆';
+      position: absolute;
+      left: 0;
+      top: 0.3rem;
+      color: var(--gold);
+      font-size: 0.9rem;
     }
 
     .service-item:last-child {
@@ -647,35 +834,40 @@ export function generateMemorialHTML(memorialData: any): string {
 
     .service-label {
       font-weight: 600;
-      color: var(--primary);
-      font-size: 1.05rem;
-      margin-bottom: 0.5rem;
+      color: var(--deep-blue);
+      font-size: 1.2rem;
+      margin-bottom: 0.8rem;
+      font-family: 'Montserrat', sans-serif;
+      letter-spacing: 0.02em;
     }
 
     .service-value {
-      color: #5a5a5a;
-      font-size: 1rem;
-      line-height: 1.7;
+      color: #3a3a3a;
+      font-size: 1.05rem;
+      line-height: 1.8;
     }
 
     /* FOOTER */
     .memorial-footer {
       text-align: center;
-      padding: 3rem 2rem;
+      padding: 3.5rem 2.5rem;
       color: var(--soft-text);
       font-style: italic;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 12px;
-      max-width: 600px;
+      background: linear-gradient(135deg, white, var(--warm-cream));
+      border-radius: 16px;
+      max-width: 650px;
       margin: 0 auto;
+      border-top: 3px solid var(--gold);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     }
 
     .footer-quote {
-      font-family: 'Lora', serif;
-      font-size: 1.1rem;
-      margin-bottom: 1.5rem;
-      line-height: 1.8;
-      color: #5a5147;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      line-height: 2;
+      color: var(--deep-blue);
+      font-weight: 500;
     }
 
     /* PRINT OPTIMIZATIONS */
@@ -683,7 +875,7 @@ export function generateMemorialHTML(memorialData: any): string {
       body {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        font-size: 13px;
+        font-size: 14px;
       }
       
       .page-break {
@@ -697,6 +889,10 @@ export function generateMemorialHTML(memorialData: any): string {
       .cover-page {
         min-height: 27cm;
       }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 0.5; }
+      }
     }
   </style>
 </head>
@@ -706,14 +902,27 @@ export function generateMemorialHTML(memorialData: any): string {
   <div class="cover-page page-break">
     <div class="memorial-title">In Loving Memory</div>
     <h1 class="cover-name">${name}</h1>
+    
+    <div class="ornamental-divider">
+      <span class="ornamental-line"></span>
+      <span>◆</span>
+      <span class="ornamental-line"></span>
+    </div>
+    
     ${birthDate || deathDate ? `
       <div class="cover-dates">
         ${formatDate(birthDate) || ''} ${birthDate && deathDate ? '—' : ''} ${formatDate(deathDate) || ''}
       </div>
     ` : ''}
+    
+    ${calculateAge() ? `
+      <div class="cover-age">${calculateAge()}</div>
+    ` : ''}
+    
     ${location ? `
       <div class="cover-location">${location}</div>
     ` : ''}
+    
     <div class="cover-quote">
       "Those we love don't go away, they walk beside us every day. 
       Unseen, unheard, but always near, still loved, still missed, and very dear."
@@ -750,7 +959,7 @@ export function generateMemorialHTML(memorialData: any): string {
       
       ${location ? `
         <div class="profile-location">
-          <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
           </svg>
           ${location}
@@ -864,84 +1073,67 @@ export function generateMemorialHTML(memorialData: any): string {
     </div>
     ${gallery.length > 0 ? '<div class="section-divider"></div>' : ''}
   ` : ''}
- <!-- GALLERY SECTION -->
-${gallery.length > 0 ? `
-  <div class="content-page ${familyTree.length > 0 ? '' : 'page-break'}">
-    <div class="section-header">
-      <h2 class="section-title">Photo Memories</h2>
-      <div class="section-subtitle">Precious Moments Captured Forever</div>
-    </div>
-    
-    <div class="gallery-section">
-      ${(() => {
-        // Group images by category - using the category field from your frontend
-        const groupedImages: {[category: string]: any[]} = {};
-        gallery.forEach((img: any) => {
-          // Use the category from your GalleryImage interface
-          const category = img.category || 'Other Memories';
-          if (!groupedImages[category]) {
-            groupedImages[category] = [];
-          }
-          groupedImages[category].push(img);
-        });
 
-        let html = '';
-        Object.entries(groupedImages).forEach(([category, images], categoryIndex) => {
-          html += `
-            <div class="gallery-category avoid-break" style="margin-bottom: 3rem;">
-              <h3 class="gallery-category-title" style="
-                font-family: 'Lora', serif;
-                font-size: 1.4rem;
-                color: var(--primary);
-                margin-bottom: 1.5rem;
-                padding-bottom: 0.5rem;
-                border-bottom: 2px solid var(--gentle-border);
-                text-align: center;
-                text-transform: capitalize;
-              ">${category}</h3>
-              
-              <div class="gallery-grid">
-                ${images.map((img: any, index: number) => `
-                  <div class="gallery-item">
-                    <img 
-                      src="${img.url || img}" 
-                      alt="${img.caption || img.alt || `Memory ${index + 1}`}"
-                      class="gallery-image"
-                    />
-                    ${img.caption ? `
-                      <div class="gallery-caption" style="
-                        margin-top: 0.75rem;
-                        text-align: center;
-                        font-size: 0.85rem;
-                        color: var(--soft-text);
-                        line-height: 1.4;
-                        padding: 0 0.5rem;
-                      ">${img.caption}</div>
-                    ` : ''}
-                    ${img.uploadedAt ? `
-                      <div style="
-                        text-align: center;
-                        font-size: 0.75rem;
-                        color: var(--soft-text);
-                        margin-top: 0.25rem;
-                        font-style: italic;
-                      ">${formatDate(img.uploadedAt)}</div>
-                    ` : ''}
-                  </div>
-                `).join('')}
+  <!-- GALLERY SECTION -->
+  ${gallery.length > 0 ? `
+    <div class="content-page ${familyTree.length > 0 ? '' : 'page-break'}">
+      <div class="section-header">
+        <h2 class="section-title">Photo Memories</h2>
+        <div class="section-subtitle">Precious Moments Captured Forever</div>
+      </div>
+      
+      <div class="gallery-section">
+        ${(() => {
+          const groupedImages: {[category: string]: any[]} = {};
+          gallery.forEach((img: any) => {
+            const category = img.category || 'Other Memories';
+            if (!groupedImages[category]) {
+              groupedImages[category] = [];
+            }
+            groupedImages[category].push(img);
+          });
+
+          let html = '';
+          Object.entries(groupedImages).forEach(([category, images], categoryIndex) => {
+            html += `
+              <div class="gallery-category avoid-break">
+                <h3 class="gallery-category-title">${category}</h3>
+                
+                <div class="gallery-grid">
+                  ${images.map((img: any, index: number) => `
+                    <div class="gallery-item">
+                      <img 
+                        src="${img.url || img}" 
+                        alt="${img.caption || img.alt || `Memory ${index + 1}`}"
+                        class="gallery-image"
+                      />
+                      ${img.caption ? `
+                        <div class="gallery-caption">${img.caption}</div>
+                      ` : ''}
+                      ${img.uploadedAt ? `
+                        <div style="
+                          text-align: center;
+                          font-size: 0.8rem;
+                          color: var(--soft-text);
+                          margin-top: 0.4rem;
+                          font-style: italic;
+                        ">${formatDate(img.uploadedAt)}</div>
+                      ` : ''}
+                    </div>
+                  `).join('')}
+                </div>
               </div>
-            </div>
-            
-            ${categoryIndex < Object.keys(groupedImages).length - 1 ? 
-              '<div class="section-divider" style="margin: 2rem 0;"></div>' : ''}
-          `;
-        });
-        return html;
-      })()}
+              
+              ${categoryIndex < Object.keys(groupedImages).length - 1 ? 
+                '<div class="section-divider"></div>' : ''}
+            `;
+          });
+          return html;
+        })()}
+      </div>
     </div>
-  </div>
-  ${memoryWall.length > 0 ? '<div class="section-divider"></div>' : ''}
-` : ''}
+    ${memoryWall.length > 0 ? '<div class="section-divider"></div>' : ''}
+  ` : ''}
 
   <!-- MEMORIES SECTION -->
   ${memoryWall.length > 0 ? `
@@ -1011,7 +1203,7 @@ ${gallery.length > 0 ? `
               <div class="service-label">Virtual Attendance</div>
               <div class="service-value">${service.virtualLink}</div>
               ${service.virtualPlatform ? `
-                <div style="color: var(--primary); font-size: 0.9rem; margin-top: 0.25rem;">
+                <div style="color: var(--gold); font-size: 0.95rem; margin-top: 0.5rem;">
                   Platform: ${service.virtualPlatform}
                 </div>
               ` : ''}
@@ -1029,7 +1221,7 @@ ${gallery.length > 0 ? `
         "What we have once enjoyed we can never lose. All that we love deeply becomes a part of us."<br>
         — Helen Keller
       </div>
-      <div style="margin-top: 1rem; font-size: 0.95rem;">
+      <div style="margin-top: 1.5rem; font-size: 1rem; font-family: 'Montserrat', sans-serif;">
         This memorial booklet was created with love and remembrance<br>
         ${new Date().getFullYear()}
       </div>
@@ -1041,11 +1233,9 @@ ${gallery.length > 0 ? `
   `;
 }
 
-// Enhanced icon mapping
 // Enhanced icon mapping with SVG icons for PDF compatibility
 function getFavoriteIcon(category: string): string {
   const icons: { [key: string]: string } = {
-    // Food & Drink
     food: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
       <path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.2-1.1-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"/>
     </svg>`,
@@ -1054,7 +1244,6 @@ function getFavoriteIcon(category: string): string {
       <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM2 21h18v-2H2v2z"/>
     </svg>`,
     
-    // Entertainment
     movie: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
       <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
     </svg>`,
@@ -1071,7 +1260,6 @@ function getFavoriteIcon(category: string): string {
       <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
     </svg>`,
     
-    // Activities & Hobbies
     hobby: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
       <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
     </svg>`,
@@ -1080,7 +1268,6 @@ function getFavoriteIcon(category: string): string {
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.5v-3.5H9V9h7c1.1 0 2 .9 2 2v3c0 1.1-.9 2-2 2h-3zm-1-5.5v-3.5h5V10H9V8.5c0-1.1.9-2 2-2h5v3h-4z"/>
     </svg>`,
     
-    // Places & Nature
     place: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
     </svg>`,
@@ -1109,7 +1296,6 @@ function getFavoriteIcon(category: string): string {
       <path d="M19.48 12.35c-.11-.36-.39-.64-.75-.71L12 10 8.23 2.38c-.15-.37-.5-.61-.89-.61s-.74.24-.89.61L2.78 11.64c-.11.36-.05.76.16 1.07.21.31.55.5.91.5h4.72l1.56 4.68c.15.37.5.61.89.61s.74-.24.89-.61l2.01-6.02 5.89 1.43c.36.09.76-.02 1.05-.3.29-.27.42-.68.32-1.05zM13.6 15.43l-.89-2.67 2.67.65-1.78 2.02z"/>
     </svg>`,
     
-    // Abstract concepts
     color: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
       <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
     </svg>`,
@@ -1122,7 +1308,6 @@ function getFavoriteIcon(category: string): string {
       <path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/>
     </svg>`,
     
-    // Default fallback
     default: `<svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
     </svg>`
@@ -1130,5 +1315,3 @@ function getFavoriteIcon(category: string): string {
   
   return icons[category.toLowerCase()] || icons.default;
 }
-  
- 
