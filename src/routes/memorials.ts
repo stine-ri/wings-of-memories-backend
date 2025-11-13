@@ -729,4 +729,152 @@ memorialsApp.get('/debug/user-memorials', authMiddleware, async (c) => {
 
 });
 
+// Add this new route to your backend memorials.ts file
+
+// NEW: Generate preview PDF with complete data (requires auth)
+memorialsApp.post('/generate-preview-pdf', authMiddleware, async (c) => {
+  const userId = c.get('userId');
+  const body = await c.req.json();
+  let browser = null;
+
+  try {
+    if (!body.data) {
+      return c.json({ error: 'Memorial data is required' }, 400);
+    }
+
+    console.log('🚀 Generating PREVIEW PDF with complete data:', {
+      name: body.data.name,
+      timeline: Array.isArray(body.data.timeline) ? body.data.timeline.length : 0,
+      favorites: Array.isArray(body.data.favorites) ? body.data.favorites.length : 0,
+      family: Array.isArray(body.data.familyTree) ? body.data.familyTree.length : 0,
+      gallery: Array.isArray(body.data.gallery) ? body.data.gallery.length : 0,
+      memories: Array.isArray(body.data.memoryWall) ? body.data.memoryWall.length : 0
+    });
+
+    // Get memories for this memorial from database
+    const memorialMemories = await db
+      .select()
+      .from(memories)
+      .where(eq(memories.memorialId, body.memorialId));
+
+    // Ensure all data is included
+    const completeMemorialData = {
+      ...body.data,
+      memories: memorialMemories || [],
+      timeline: body.data.timeline || [],
+      favorites: body.data.favorites || [],
+      familyTree: body.data.familyTree || [],
+      gallery: body.data.gallery || [],
+      memoryWall: body.data.memoryWall || []
+    };
+
+    const html = generateMemorialHTML(completeMemorialData);
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    let executablePath;
+    
+    if (isProduction) {
+      executablePath = await chromium.executablePath();
+    } else {
+      executablePath = process.env.CHROME_BIN || 
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+    }
+
+    const args = isProduction
+      ? [
+          ...chromium.args,
+          '--disable-gpu',
+          '--disable-dev-shm-usage',
+          '--disable-setuid-sandbox',
+          '--no-first-run',
+          '--no-sandbox',
+          '--no-zygote',
+          '--single-process',
+          '--disable-extensions'
+        ]
+      : [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage'
+        ];
+
+    browser = await puppeteer.launch({
+      args,
+      defaultViewport: {
+        width: 1200,
+        height: 1600,
+        deviceScaleFactor: 2
+      },
+      executablePath,
+      headless: true,
+    });
+
+    const page = await browser.newPage();
+
+    await page.setViewport({
+      width: 1200,
+      height: 1600,
+      deviceScaleFactor: 2
+    });
+
+    await page.setContent(html, {
+      waitUntil: ['domcontentloaded', 'networkidle0'],
+      timeout: 30000
+    });
+
+    await Promise.race([
+      page.evaluate(() => {
+        return Promise.all(
+          Array.from(document.images)
+            .filter(img => !img.complete)
+            .map(img => new Promise(resolve => {
+              img.onload = img.onerror = resolve;
+              setTimeout(resolve, 3000);
+            }))
+        );
+      }),
+      new Promise(resolve => setTimeout(resolve, 8000))
+    ]);
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      preferCSSPageSize: true,
+      margin: {
+        top: '0',
+        right: '0',
+        bottom: '0',
+        left: '0'
+      },
+      timeout: 60000,
+      displayHeaderFooter: false 
+    });
+
+    console.log('✅ Preview PDF generated:', pdfBuffer.length, 'bytes');
+
+    // Set headers for inline display (preview in browser)
+    c.header('Content-Type', 'application/pdf');
+    c.header('Content-Disposition', `inline; filename="${body.data.name.replace(/\s+/g, '-')}-memorial-preview.pdf"`);
+    c.header('Content-Length', pdfBuffer.length.toString());
+
+    return c.body(new Uint8Array(pdfBuffer));
+
+  } catch (error) {
+    console.error('❌ Preview PDF generation error:', error);
+    return c.json({ 
+      error: 'Failed to generate preview PDF',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  } finally {
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (err) {
+        console.error('Error closing browser:', err);
+      }
+    }
+  }
+});
+
 export { memorialsApp };
