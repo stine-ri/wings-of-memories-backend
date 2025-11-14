@@ -474,6 +474,7 @@ memorialsApp.post('/', authMiddleware, async (c) => {
 
 // PUT /:id endpoint 
 
+// FIXED PUT endpoint - handle customUrl properly
 memorialsApp.put('/:id', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const memorialId = c.req.param('id');
@@ -500,7 +501,7 @@ memorialsApp.put('/:id', authMiddleware, async (c) => {
       updatedAt: new Date(),
     };
 
-    // Update simple text fields only if they're in the request
+    // Update simple text fields only if they're in the request AND not empty strings for customUrl
     if ('name' in body) updateData.name = body.name;
     if ('profileImage' in body) updateData.profileImage = body.profileImage;
     if ('birthDate' in body) updateData.birthDate = body.birthDate;
@@ -508,7 +509,12 @@ memorialsApp.put('/:id', authMiddleware, async (c) => {
     if ('location' in body) updateData.location = body.location;
     if ('obituary' in body) updateData.obituary = body.obituary;
     if ('theme' in body) updateData.theme = body.theme;
-    if ('customUrl' in body) updateData.customUrl = body.customUrl;
+    
+    // FIX: Only update customUrl if it's not empty and actually changed
+    if ('customUrl' in body && body.customUrl && body.customUrl !== currentMemorial.customUrl) {
+      updateData.customUrl = body.customUrl;
+    }
+    
     if ('isPublished' in body) updateData.isPublished = body.isPublished;
 
     // Update arrays only if they're in the request
