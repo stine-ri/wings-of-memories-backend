@@ -12,6 +12,7 @@ export function generateMemorialHTML(memorialData: any): string {
     familyTree = [],
     gallery = [],
     memoryWall = [],
+    tributes = memoryWall,
     service = {}
   } = memorialData;
 
@@ -1136,10 +1137,10 @@ export function generateMemorialHTML(memorialData: any): string {
   ` : ''}
 
   <!-- MEMORIES SECTION -->
-  ${memoryWall.length > 0 ? `
+  ${tributes.length > 0 ? `
     <div class="content-page ${gallery.length > 0 ? '' : 'page-break'}">
       <div class="section-header">
-        <h2 class="section-title">Shared Memories</h2>
+             <h2 class="section-title">Tributes</h2> 
         <div class="section-subtitle">Words of Love and Remembrance</div>
       </div>
       

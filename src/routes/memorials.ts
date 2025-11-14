@@ -125,6 +125,7 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
       familyTree: parseJSONArray(memorial.familyTree),
       gallery: parseJSONArray(memorial.gallery),
       memoryWall: parseJSONArray(memorial.memoryWall),
+       tributes: parseJSONArray(memorial.memoryWall),
       memories: memorialMemories || [],
       // Ensure all required fields have defaults
       name: memorial.name || '',
@@ -219,6 +220,7 @@ memorialsApp.get('/:id/pdf-data', async (c) => {
         familyTree: memorialByUrl.familyTree || [],
         gallery: memorialByUrl.gallery || [],
         memoryWall: memorialByUrl.memoryWall || [],
+        tributes: memorialByUrl.memoryWall || [],
         memories: memorialMemories || []
       };
 
@@ -242,6 +244,7 @@ memorialsApp.get('/:id/pdf-data', async (c) => {
       familyTree: memorial.familyTree || [],
       gallery: memorial.gallery || [],
       memoryWall: memorial.memoryWall || [],
+       tributes: memorial.memoryWall || [],  
       memories: memorialMemories || []
     };
 
@@ -311,6 +314,7 @@ async function generatePDFResponse(c: any, memorial: any) {
       familyTree: memorial.familyTree || [],
       gallery: memorial.gallery || [],
       memoryWall: memorial.memoryWall || [],
+      tributes: memorial.memoryWall || [], 
       memories: memorialMemories || []
     };
 
@@ -435,6 +439,10 @@ memorialsApp.post('/', authMiddleware, async (c) => {
   const body = await c.req.json();
 
   try {
+
+    // Accept both memoryWall and tributes
+    const memoryWallData = body.memoryWall || body.tributes || [];
+
     const [memorial] = await db
       .insert(memorials)
       .values({
@@ -449,7 +457,7 @@ memorialsApp.post('/', authMiddleware, async (c) => {
         favorites: body.favorites || [],
         familyTree: body.familyTree || [],
         gallery: body.gallery || [],
-        memoryWall: body.memoryWall || [],
+         memoryWall: memoryWallData,
         serviceInfo: body.service || {
           venue: '',
           address: '',
@@ -472,8 +480,6 @@ memorialsApp.post('/', authMiddleware, async (c) => {
 });
 
 // PUT /:id endpoint 
-
-// FIXED PUT endpoint - handle customUrl properly
 memorialsApp.put('/:id', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const memorialId = c.req.param('id');
@@ -529,9 +535,10 @@ memorialsApp.put('/:id', authMiddleware, async (c) => {
     if ('gallery' in body) {
       updateData.gallery = Array.isArray(body.gallery) ? body.gallery : [];
     }
-    if ('memoryWall' in body) {
-      updateData.memoryWall = Array.isArray(body.memoryWall) ? body.memoryWall : [];
-    }
+   if ('memoryWall' in body || 'tributes' in body) {
+      const tributesData = body.tributes || body.memoryWall || [];
+      updateData.memoryWall = Array.isArray(tributesData) ? tributesData : [];
+   }
 
     // Handle service info
     if ('service' in body || 'serviceInfo' in body) {
