@@ -40,7 +40,6 @@ memorialsApp.get('/', authMiddleware, async (c) => {
 });
 
 // Get single memorial - FIXED WITH PROPER SERVICE TYPING
-// Update the GET memorial endpoint with detailed debugging
 memorialsApp.get('/:id', authMiddleware, async (c) => {
   const userId = c.get('userId');
   const memorialId = c.req.param('id');
@@ -158,7 +157,7 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
   }
 });
 
-// ADD THIS HELPER FUNCTION to properly parse JSON arrays
+// HELPER FUNCTION to properly parse JSON arrays
 function parseJSONArray(data: any): any[] {
   if (Array.isArray(data)) {
     return data;

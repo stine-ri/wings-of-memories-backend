@@ -1,0 +1,2 @@
+ALTER TABLE "memorials" DROP CONSTRAINT "memorials_custom_url_unique";--> statement-breakpoint
+CREATE UNIQUE INDEX "memorials_custom_url_unique" ON "memorials" USING btree ("custom_url") WHERE "memorials"."custom_url" IS NOT NULL AND "memorials"."custom_url" != '';

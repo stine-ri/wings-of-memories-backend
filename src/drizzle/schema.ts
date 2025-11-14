@@ -1,5 +1,5 @@
-import { pgTable, text, timestamp, uuid, boolean, jsonb } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { pgTable, text, timestamp, uuid, boolean, jsonb, uniqueIndex } from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -30,10 +30,20 @@ export const memorials = pgTable('memorials', {
   serviceInfo: jsonb('service_info'),
   memoryWall: jsonb('memory_wall').default([]), 
   isPublished: boolean('is_published').default(false),
-  customUrl: text('custom_url').unique(),
+  
+  // FIXED: Make customUrl nullable and remove unique constraint from column definition
+  customUrl: text('custom_url'),
+  
   theme: text('theme').default('default'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => {
+  return {
+    // Create a partial unique index that only enforces uniqueness for non-empty values
+    customUrlUnique: uniqueIndex('memorials_custom_url_unique')
+      .on(table.customUrl)
+      .where(sql`${table.customUrl} IS NOT NULL AND ${table.customUrl} != ''`),
+  };
 });
 
 export const memories = pgTable('memories', {
