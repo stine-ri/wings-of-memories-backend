@@ -20,6 +20,37 @@ interface ServiceInfo {
   virtualLink?: string;
   virtualPlatform?: string;
 }
+// Add this helper function at the top
+const ensureCompleteMemorialData = (memorial: any) => {
+  // Ensure all required fields are present with proper defaults
+  return {
+    ...memorial,
+    id: memorial.id || '',
+    name: memorial.name || 'Unnamed Memorial',
+    profileImage: memorial.profileImage || '',
+    birthDate: memorial.birthDate || '',
+    deathDate: memorial.deathDate || '',
+    location: memorial.location || '',
+    obituary: memorial.obituary || '',
+    timeline: Array.isArray(memorial.timeline) ? memorial.timeline : [],
+    favorites: Array.isArray(memorial.favorites) ? memorial.favorites : [],
+    familyTree: Array.isArray(memorial.familyTree) ? memorial.familyTree : [],
+    gallery: Array.isArray(memorial.gallery) ? memorial.gallery : [],
+    memoryWall: Array.isArray(memorial.memoryWall) ? memorial.memoryWall : [],
+    service: memorial.service || {
+      venue: '',
+      address: '',
+      date: '',
+      time: '',
+      virtualLink: '',
+      virtualPlatform: 'zoom'
+    },
+    memories: Array.isArray(memorial.memories) ? memorial.memories : [],
+    isPublished: Boolean(memorial.isPublished),
+    customUrl: memorial.customUrl || '',
+    theme: memorial.theme || 'default'
+  };
+};
 
 // Get user's memorials
 memorialsApp.get('/', authMiddleware, async (c) => {
@@ -50,49 +81,6 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
       .from(memorials)
       .where(eq(memorials.id, memorialId));
 
-    // COMPREHENSIVE DEBUGGING
-    console.log('🔍 RAW DATABASE DATA ANALYSIS:', {
-      id: memorial?.id,
-      name: memorial?.name,
-      // Check the actual data types and values
-      timeline: {
-        exists: !!memorial?.timeline,
-        type: typeof memorial?.timeline,
-        value: memorial?.timeline,
-        isArray: Array.isArray(memorial?.timeline),
-        length: Array.isArray(memorial?.timeline) ? memorial.timeline.length : 'N/A'
-      },
-      favorites: {
-        exists: !!memorial?.favorites,
-        type: typeof memorial?.favorites,
-        value: memorial?.favorites,
-        isArray: Array.isArray(memorial?.favorites),
-        length: Array.isArray(memorial?.favorites) ? memorial.favorites.length : 'N/A'
-      },
-      familyTree: {
-        exists: !!memorial?.familyTree,
-        type: typeof memorial?.familyTree,
-        value: memorial?.familyTree,
-        isArray: Array.isArray(memorial?.familyTree),
-        length: Array.isArray(memorial?.familyTree) ? memorial.familyTree.length : 'N/A'
-      },
-      gallery: {
-        exists: !!memorial?.gallery,
-        type: typeof memorial?.gallery,
-        value: memorial?.gallery,
-        isArray: Array.isArray(memorial?.gallery),
-        length: Array.isArray(memorial?.gallery) ? memorial.gallery.length : 'N/A'
-      },
-      memoryWall: {
-        exists: !!memorial?.memoryWall,
-        type: typeof memorial?.memoryWall,
-        value: memorial?.memoryWall,
-        isArray: Array.isArray(memorial?.memoryWall),
-        length: Array.isArray(memorial?.memoryWall) ? memorial.memoryWall.length : 'N/A'
-      },
-      serviceInfo: memorial?.serviceInfo
-    });
-
     if (!memorial || memorial.userId !== userId) {
       return c.json({ error: 'Memorial not found' }, 404);
     }
@@ -103,52 +91,20 @@ memorialsApp.get('/:id', authMiddleware, async (c) => {
       .from(memories)
       .where(eq(memories.memorialId, memorialId));
 
-    console.log('📋 Memories from separate table:', memorialMemories.length);
-
     // Parse service info with proper typing
     const serviceInfo: ServiceInfo = memorial.serviceInfo as ServiceInfo || {};
     
-    // ENHANCED TRANSFORMATION with proper array handling
-    const transformedMemorial = {
+    // Use the helper to ensure complete data
+    const transformedMemorial = ensureCompleteMemorialData({
       ...memorial,
-      service: {
-        venue: serviceInfo.venue || '',
-        address: serviceInfo.address || '',
-        date: serviceInfo.date || '',
-        time: serviceInfo.time || '',
-        virtualLink: serviceInfo.virtualLink || '',
-        virtualPlatform: serviceInfo.virtualPlatform || 'zoom'
-      },
-      // CRITICAL FIX: Ensure arrays are properly parsed
-      timeline: parseJSONArray(memorial.timeline),
-      favorites: parseJSONArray(memorial.favorites),
-      familyTree: parseJSONArray(memorial.familyTree),
-      gallery: parseJSONArray(memorial.gallery),
-      memoryWall: parseJSONArray(memorial.memoryWall),
-       tributes: parseJSONArray(memorial.memoryWall),
-      memories: memorialMemories || [],
-      // Ensure all required fields have defaults
-      name: memorial.name || '',
-      profileImage: memorial.profileImage || '',
-      birthDate: memorial.birthDate || '',
-      deathDate: memorial.deathDate || '',
-      location: memorial.location || '',
-      obituary: memorial.obituary || '',
-      isPublished: memorial.isPublished || false,
-      customUrl: memorial.customUrl || '',
-      theme: memorial.theme || 'default'
-    };
+      service: serviceInfo,
+      memories: memorialMemories || []
+    });
 
-    console.log('✅ FINAL TRANSFORMED DATA:', {
+    console.log('✅ Returning complete memorial data:', {
       id: transformedMemorial.id,
       name: transformedMemorial.name,
-      timeline: Array.isArray(transformedMemorial.timeline) ? transformedMemorial.timeline.length : 'NOT ARRAY',
-      favorites: Array.isArray(transformedMemorial.favorites) ? transformedMemorial.favorites.length : 'NOT ARRAY',
-      familyTree: Array.isArray(transformedMemorial.familyTree) ? transformedMemorial.familyTree.length : 'NOT ARRAY',
-      gallery: Array.isArray(transformedMemorial.gallery) ? transformedMemorial.gallery.length : 'NOT ARRAY',
-      memoryWall: Array.isArray(transformedMemorial.memoryWall) ? transformedMemorial.memoryWall.length : 'NOT ARRAY',
-      memories: Array.isArray(transformedMemorial.memories) ? transformedMemorial.memories.length : 'NOT ARRAY',
-      hasService: !!(transformedMemorial.service && transformedMemorial.service.venue)
+      hasAllData: true
     });
 
     return c.json({ memorial: transformedMemorial });
