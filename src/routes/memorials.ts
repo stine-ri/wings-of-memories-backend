@@ -1000,4 +1000,89 @@ memorialsApp.get('/:id/debug-raw', authMiddleware, async (c) => {
     return c.json({ error: 'Debug failed' }, 500);
   }
 });
+
+// backend/routes/memorials.ts - FIXED PUBLIC ROUTE
+// Add this route (replace the existing /public/:id route)
+
+// PUBLIC MEMORIAL ROUTE - Works with both ID and customUrl
+memorialsApp.get('/public/:identifier', async (c) => {
+  const identifier = c.req.param('identifier');
+
+  console.log('🔍 Public memorial request for:', identifier);
+
+  try {
+    let memorial = null;
+
+    // Try to find by ID first
+    const [memorialById] = await db
+      .select()
+      .from(memorials)
+      .where(eq(memorials.id, identifier));
+
+    if (memorialById) {
+      memorial = memorialById;
+      console.log('✅ Found by ID:', memorial.id);
+    } else {
+      // Try by customUrl
+      const [memorialByUrl] = await db
+        .select()
+        .from(memorials)
+        .where(eq(memorials.customUrl, identifier));
+
+      if (memorialByUrl) {
+        memorial = memorialByUrl;
+        console.log('✅ Found by customUrl:', memorial.customUrl);
+      }
+    }
+
+    // Not found at all
+    if (!memorial) {
+      console.log('❌ Memorial not found:', identifier);
+      return c.json({ error: 'Memorial not found' }, 404);
+    }
+
+    // Check if published (optional - remove if you want all memorials accessible)
+    if (!memorial.isPublished) {
+      console.log('⚠️ Memorial not published:', identifier);
+      // Uncomment next line if you want to restrict unpublished memorials
+      // return c.json({ error: 'Memorial is not published' }, 403);
+    }
+
+    // Get memories for this memorial
+    const memorialMemories = await db
+      .select()
+      .from(memories)
+      .where(eq(memories.memorialId, memorial.id));
+
+    // Parse service info with proper typing
+    const serviceInfo = memorial.serviceInfo as ServiceInfo || {};
+
+    // Return complete memorial data
+    const transformedMemorial = {
+      ...memorial,
+      service: serviceInfo,
+      serviceInfo: serviceInfo,
+      timeline: memorial.timeline || [],
+      favorites: memorial.favorites || [],
+      familyTree: memorial.familyTree || [],
+      gallery: memorial.gallery || [],
+      memoryWall: memorial.memoryWall || [],
+      tributes: memorial.memoryWall || [],
+      memories: memorialMemories || []
+    };
+
+    console.log('✅ Returning memorial data:', {
+      id: transformedMemorial.id,
+      name: transformedMemorial.name,
+      customUrl: transformedMemorial.customUrl,
+      isPublished: transformedMemorial.isPublished
+    });
+
+    return c.json({ memorial: transformedMemorial });
+  } catch (error) {
+    console.error('❌ Error fetching public memorial:', error);
+    return c.json({ error: 'Failed to fetch memorial' }, 500);
+  }
+});
+
 export { memorialsApp };
