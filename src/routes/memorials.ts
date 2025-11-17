@@ -1,8 +1,9 @@
-// backend/routes/memorials.ts - FIXED WITH PROPER SERVICE TYPING
+
+// backend/routes/memorials.ts - COMPLETELY FIXED VERSION
 import { Hono } from 'hono';
 import { db } from '../drizzle/db.js';
 import { memorials, memories, users } from '../drizzle/schema.js';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, or } from 'drizzle-orm';
 import { authMiddleware } from '../middleware/bearAuth.js';
 import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
@@ -23,7 +24,6 @@ interface ServiceInfo {
 
 // Helper function to ensure complete memorial data
 const ensureCompleteMemorialData = (memorial: any) => {
-  // Ensure all required fields are present with proper defaults
   return {
     ...memorial,
     id: memorial.id || '',
@@ -53,30 +53,7 @@ const ensureCompleteMemorialData = (memorial: any) => {
   };
 };
 
-// HELPER FUNCTION to properly parse JSON arrays
-function parseJSONArray(data: any): any[] {
-  if (Array.isArray(data)) {
-    return data;
-  }
-  
-  if (typeof data === 'string') {
-    try {
-      const parsed = JSON.parse(data);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-      console.error('❌ Failed to parse JSON array:', error);
-      return [];
-    }
-  }
-  
-  if (data === null || data === undefined) {
-    return [];
-  }
-  
-  return [];
-}
-
-// Helper function to generate PDF response - FIXED WITH PROPER SERVICE TYPING
+// Helper function to generate PDF response
 async function generatePDFResponse(c: any, memorial: any) {
   let browser = null;
 
@@ -221,15 +198,19 @@ async function generatePDFResponse(c: any, memorial: any) {
 // PUBLIC ROUTES (No authentication required)
 // =============================================================================
 
-// PUBLIC MEMORIAL ROUTE - Works with both ID and customUrl
+// ✅ FIXED: Helper function to clean memorial identifier
+function cleanMemorialIdentifier(identifier: string): string {
+  // Remove "memorial-" prefix if it exists
+  if (identifier.startsWith('memorial-')) {
+    return identifier.replace('memorial-', '');
+  }
+  return identifier;
+}
 
+// ✅ FIXED: Public memorial route with proper identifier handling
 memorialsApp.get('/public/:identifier', async (c) => {
   const rawIdentifier = c.req.param('identifier');
-  
-  // ✅ FIX: Strip "memorial-" prefix if it exists
-  const identifier = rawIdentifier.startsWith('memorial-') 
-    ? rawIdentifier.replace('memorial-', '') 
-    : rawIdentifier;
+  const identifier = cleanMemorialIdentifier(rawIdentifier);
 
   console.log('🔍 Public memorial request for:', { raw: rawIdentifier, cleaned: identifier });
 
@@ -323,50 +304,51 @@ memorialsApp.get('/public/:identifier', async (c) => {
     }, 500);
   }
 });
-// NEW: Get memorial for PDF preview (PUBLIC - no auth required) - FIXED
+
+// ✅ FIXED: Get memorial for PDF preview with proper identifier handling
 memorialsApp.get('/:id/pdf-data', async (c) => {
-  const memorialId = c.req.param('id');
+  const rawId = c.req.param('id');
+  const memorialId = cleanMemorialIdentifier(rawId);
+
+  console.log('📊 PDF data request for:', { raw: rawId, cleaned: memorialId });
 
   try {
-    // Try to find by ID or customUrl
-    const [memorial] = await db
-      .select()
-      .from(memorials)
-      .where(eq(memorials.id, memorialId));
+    let memorial = null;
 
-    if (!memorial) {
-      // Try by customUrl
-      const [memorialByUrl] = await db
+    // Try to find by ID first
+    try {
+      const [memorialById] = await db
         .select()
         .from(memorials)
-        .where(eq(memorials.customUrl, memorialId));
+        .where(eq(memorials.id, memorialId));
 
-      if (!memorialByUrl) {
-        return c.json({ error: 'Memorial not found' }, 404);
+      if (memorialById) {
+        memorial = memorialById;
+        console.log('✅ Found by ID for PDF data:', memorial.id);
       }
+    } catch (error) {
+      console.log('⚠️ ID search failed for PDF data, trying customUrl:', error);
+    }
 
-      // Get memories for this memorial
-      const memorialMemories = await db
-        .select()
-        .from(memories)
-        .where(eq(memories.memorialId, memorialByUrl.id));
+    // If not found by ID, try by customUrl
+    if (!memorial) {
+      try {
+        const [memorialByUrl] = await db
+          .select()
+          .from(memorials)
+          .where(eq(memorials.customUrl, memorialId));
 
-      // Parse service info with proper typing
-      const serviceInfo: ServiceInfo = memorialByUrl.serviceInfo as ServiceInfo || {};
+        if (memorialByUrl) {
+          memorial = memorialByUrl;
+          console.log('✅ Found by customUrl for PDF data:', memorial.customUrl);
+        }
+      } catch (error) {
+        console.log('⚠️ CustomUrl search failed for PDF data:', error);
+      }
+    }
 
-      const transformedMemorial = {
-        ...memorialByUrl,
-        service: serviceInfo,
-        timeline: memorialByUrl.timeline || [],
-        favorites: memorialByUrl.favorites || [],
-        familyTree: memorialByUrl.familyTree || [],
-        gallery: memorialByUrl.gallery || [],
-        memoryWall: memorialByUrl.memoryWall || [],
-        tributes: memorialByUrl.memoryWall || [],  
-        memories: memorialMemories || []
-      };
-
-      return c.json({ memorial: transformedMemorial });
+    if (!memorial) {
+      return c.json({ error: 'Memorial not found' }, 404);
     }
 
     // Get memories for this memorial
@@ -386,44 +368,65 @@ memorialsApp.get('/:id/pdf-data', async (c) => {
       familyTree: memorial.familyTree || [],
       gallery: memorial.gallery || [],
       memoryWall: memorial.memoryWall || [],
-       tributes: memorial.memoryWall || [],  
+      tributes: memorial.memoryWall || [],  
       memories: memorialMemories || []
     };
 
     return c.json({ memorial: transformedMemorial });
   } catch (error) {
-    console.error('Error fetching memorial:', error);
+    console.error('Error fetching memorial for PDF data:', error);
     return c.json({ error: 'Failed to fetch memorial' }, 500);
   }
 });
 
-// NEW: Stream PDF directly for preview (PUBLIC - no auth required)
+// ✅ FIXED: Stream PDF directly for preview with proper identifier handling
 memorialsApp.get('/:id/preview-pdf', async (c) => {
-  const memorialId = c.req.param('id');
+  const rawId = c.req.param('id');
+  const memorialId = cleanMemorialIdentifier(rawId);
   let browser = null;
 
-  try {
-    // Fetch memorial data
-    const [memorial] = await db
-      .select()
-      .from(memorials)
-      .where(eq(memorials.id, memorialId));
+  console.log('📄 PDF preview request for:', { raw: rawId, cleaned: memorialId });
 
-    if (!memorial) {
-      // Try by customUrl
-      const [memorialByUrl] = await db
+  try {
+    let memorial = null;
+
+    // Try to find by ID first
+    try {
+      const [memorialById] = await db
         .select()
         .from(memorials)
-        .where(eq(memorials.customUrl, memorialId));
+        .where(eq(memorials.id, memorialId));
 
-      if (!memorialByUrl) {
-        return c.json({ error: 'Memorial not found' }, 404);
+      if (memorialById) {
+        memorial = memorialById;
+        console.log('✅ Found by ID for PDF preview:', memorial.id);
       }
-
-      return generatePDFResponse(c, memorialByUrl);
+    } catch (error) {
+      console.log('⚠️ ID search failed for PDF preview, trying customUrl:', error);
     }
 
-    return generatePDFResponse(c, memorial);
+    // If not found by ID, try by customUrl
+    if (!memorial) {
+      try {
+        const [memorialByUrl] = await db
+          .select()
+          .from(memorials)
+          .where(eq(memorials.customUrl, memorialId));
+
+        if (memorialByUrl) {
+          memorial = memorialByUrl;
+          console.log('✅ Found by customUrl for PDF preview:', memorial.customUrl);
+        }
+      } catch (error) {
+        console.log('⚠️ CustomUrl search failed for PDF preview:', error);
+      }
+    }
+
+    if (!memorial) {
+      return c.json({ error: 'Memorial not found' }, 404);
+    }
+
+    return await generatePDFResponse(c, memorial);
 
   } catch (error) {
     console.error('❌ PDF preview error:', error);
@@ -434,34 +437,46 @@ memorialsApp.get('/:id/preview-pdf', async (c) => {
   }
 });
 
-//  PUBLIC MEMORIAL ROUTE
+// ✅ FIXED: Legacy public memorial route for compatibility
 memorialsApp.get('/public/:id', async (c) => {
-  const memorialId = c.req.param('id');
+  const rawId = c.req.param('id');
+  const memorialId = cleanMemorialIdentifier(rawId);
 
   try {
-    // Try to find by ID or customUrl
-    const [memorial] = await db
-      .select()
-      .from(memorials)
-      .where(eq(memorials.id, memorialId));
+    let memorial = null;
 
-    if (!memorial) {
-      // Try by customUrl
-      const [memorialByUrl] = await db
+    // Try to find by ID first
+    try {
+      const [memorialById] = await db
         .select()
         .from(memorials)
-        .where(eq(memorials.customUrl, memorialId));
+        .where(eq(memorials.id, memorialId));
 
-      if (!memorialByUrl) {
-        return c.json({ error: 'Memorial not found' }, 404);
+      if (memorialById) {
+        memorial = memorialById;
       }
+    } catch (error) {
+      console.log('ID search failed:', error);
+    }
 
-      // Only return published memorials
-      if (!memorialByUrl.isPublished) {
-        return c.json({ error: 'Memorial is not published' }, 403);
+    // If not found by ID, try by customUrl
+    if (!memorial) {
+      try {
+        const [memorialByUrl] = await db
+          .select()
+          .from(memorials)
+          .where(eq(memorials.customUrl, memorialId));
+
+        if (memorialByUrl) {
+          memorial = memorialByUrl;
+        }
+      } catch (error) {
+        console.log('CustomUrl search failed:', error);
       }
+    }
 
-      return c.json({ memorial: memorialByUrl });
+    if (!memorial) {
+      return c.json({ error: 'Memorial not found' }, 404);
     }
 
     // Only return published memorials
@@ -1048,68 +1063,5 @@ memorialsApp.post('/generate-preview-pdf', authMiddleware, async (c) => {
   }
 });
 
-//debug log
-memorialsApp.get('/:id/debug-raw', authMiddleware, async (c) => {
-  const userId = c.get('userId');
-  const memorialId = c.req.param('id');
-
-  try {
-    const [memorial] = await db
-      .select()
-      .from(memorials)
-      .where(eq(memorials.id, memorialId));
-
-    if (!memorial || memorial.userId !== userId) {
-      return c.json({ error: 'Memorial not found' }, 404);
-    }
-
-    // Return raw database data without transformation
-    return c.json({
-      rawData: {
-        id: memorial.id,
-        name: memorial.name,
-        timeline: {
-          raw: memorial.timeline,
-          type: typeof memorial.timeline,
-          isArray: Array.isArray(memorial.timeline),
-          parsed: parseJSONArray(memorial.timeline),
-          parsedLength: parseJSONArray(memorial.timeline).length
-        },
-        favorites: {
-          raw: memorial.favorites,
-          type: typeof memorial.favorites,
-          isArray: Array.isArray(memorial.favorites),
-          parsed: parseJSONArray(memorial.favorites),
-          parsedLength: parseJSONArray(memorial.favorites).length
-        },
-        familyTree: {
-          raw: memorial.familyTree,
-          type: typeof memorial.familyTree,
-          isArray: Array.isArray(memorial.familyTree),
-          parsed: parseJSONArray(memorial.familyTree),
-          parsedLength: parseJSONArray(memorial.familyTree).length
-        },
-        gallery: {
-          raw: memorial.gallery,
-          type: typeof memorial.gallery,
-          isArray: Array.isArray(memorial.gallery),
-          parsed: parseJSONArray(memorial.gallery),
-          parsedLength: parseJSONArray(memorial.gallery).length
-        },
-        memoryWall: {
-          raw: memorial.memoryWall,
-          type: typeof memorial.memoryWall,
-          isArray: Array.isArray(memorial.memoryWall),
-          parsed: parseJSONArray(memorial.memoryWall),
-          parsedLength: parseJSONArray(memorial.memoryWall).length
-        },
-        serviceInfo: memorial.serviceInfo
-      }
-    });
-  } catch (error) {
-    console.error('Debug error:', error);
-    return c.json({ error: 'Debug failed' }, 500);
-  }
-});
 
 export { memorialsApp };
