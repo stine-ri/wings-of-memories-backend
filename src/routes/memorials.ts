@@ -222,43 +222,62 @@ async function generatePDFResponse(c: any, memorial: any) {
 // =============================================================================
 
 // PUBLIC MEMORIAL ROUTE - Works with both ID and customUrl
-memorialsApp.get('/public/:identifier', async (c) => {
-  const identifier = c.req.param('identifier');
 
-  console.log('🔍 Public memorial request for:', identifier);
+memorialsApp.get('/public/:identifier', async (c) => {
+  const rawIdentifier = c.req.param('identifier');
+  
+  // ✅ FIX: Strip "memorial-" prefix if it exists
+  const identifier = rawIdentifier.startsWith('memorial-') 
+    ? rawIdentifier.replace('memorial-', '') 
+    : rawIdentifier;
+
+  console.log('🔍 Public memorial request for:', { raw: rawIdentifier, cleaned: identifier });
 
   try {
     let memorial = null;
 
     // Try to find by ID first
-    const [memorialById] = await db
-      .select()
-      .from(memorials)
-      .where(eq(memorials.id, identifier));
-
-    if (memorialById) {
-      memorial = memorialById;
-      console.log('✅ Found by ID:', memorial.id);
-    } else {
-      // Try by customUrl
-      const [memorialByUrl] = await db
+    try {
+      const [memorialById] = await db
         .select()
         .from(memorials)
-        .where(eq(memorials.customUrl, identifier));
+        .where(eq(memorials.id, identifier));
 
-      if (memorialByUrl) {
-        memorial = memorialByUrl;
-        console.log('✅ Found by customUrl:', memorial.customUrl);
+      if (memorialById) {
+        memorial = memorialById;
+        console.log('✅ Found by ID:', memorial.id);
+      }
+    } catch (error) {
+      console.log('⚠️ ID search failed, trying customUrl:', error);
+    }
+
+    // If not found by ID, try by customUrl
+    if (!memorial) {
+      try {
+        const [memorialByUrl] = await db
+          .select()
+          .from(memorials)
+          .where(eq(memorials.customUrl, identifier));
+
+        if (memorialByUrl) {
+          memorial = memorialByUrl;
+          console.log('✅ Found by customUrl:', memorial.customUrl);
+        }
+      } catch (error) {
+        console.log('⚠️ CustomUrl search failed:', error);
       }
     }
 
     // Not found at all
     if (!memorial) {
       console.log('❌ Memorial not found:', identifier);
-      return c.json({ error: 'Memorial not found' }, 404);
+      return c.json({ 
+        error: 'Memorial not found',
+        details: `No memorial found with identifier: ${identifier}`
+      }, 404);
     }
 
-    // Check if published (optional - remove if you want all memorials accessible)
+    // Check if published (optional - commented out to allow unpublished access)
     if (!memorial.isPublished) {
       console.log('⚠️ Memorial not published:', identifier);
       // Uncomment next line if you want to restrict unpublished memorials
@@ -298,10 +317,12 @@ memorialsApp.get('/public/:identifier', async (c) => {
     return c.json({ memorial: transformedMemorial });
   } catch (error) {
     console.error('❌ Error fetching public memorial:', error);
-    return c.json({ error: 'Failed to fetch memorial' }, 500);
+    return c.json({ 
+      error: 'Failed to fetch memorial',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
   }
 });
-
 // NEW: Get memorial for PDF preview (PUBLIC - no auth required) - FIXED
 memorialsApp.get('/:id/pdf-data', async (c) => {
   const memorialId = c.req.param('id');
