@@ -491,6 +491,90 @@ memorialsApp.get('/public/:id', async (c) => {
   }
 });
 
+// Get all public memorials with search and filters
+memorialsApp.get('/public', async (c) => {
+  try {
+    // Get query parameters
+    const searchQuery = c.req.query('search')?.toLowerCase() || '';
+    const sortBy = c.req.query('sortBy') || 'recent'; // recent, oldest, name
+    const limit = parseInt(c.req.query('limit') || '50');
+    const offset = parseInt(c.req.query('offset') || '0');
+
+    console.log('🔍 Public memorials search:', { searchQuery, sortBy, limit, offset });
+
+    // Get all published memorials
+    let query = db
+      .select()
+      .from(memorials)
+      .where(eq(memorials.isPublished, true));
+
+    // Fetch all results first for filtering
+    const allMemorials = await query;
+
+    // Filter by search query if provided
+    let filteredMemorials = allMemorials;
+    if (searchQuery) {
+      filteredMemorials = allMemorials.filter(memorial => {
+        const nameMatch = memorial.name?.toLowerCase().includes(searchQuery);
+        const locationMatch = memorial.location?.toLowerCase().includes(searchQuery);
+        const obituaryMatch = memorial.obituary?.toLowerCase().includes(searchQuery);
+        
+        return nameMatch || locationMatch || obituaryMatch;
+      });
+    }
+
+    // Sort memorials
+    filteredMemorials.sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'name':
+          return (a.name || '').localeCompare(b.name || '');
+        case 'recent':
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
+
+    // Apply pagination
+    const total = filteredMemorials.length;
+    const paginatedMemorials = filteredMemorials.slice(offset, offset + limit);
+
+    // Transform memorials for frontend
+    const transformedMemorials = paginatedMemorials.map(memorial => ({
+      id: memorial.id,
+      name: memorial.name,
+      profileImage: memorial.profileImage,
+      birthDate: memorial.birthDate,
+      deathDate: memorial.deathDate,
+      location: memorial.location,
+      obituary: memorial.obituary ? memorial.obituary.substring(0, 150) + '...' : '',
+      customUrl: memorial.customUrl,
+      createdAt: memorial.createdAt,
+      theme: memorial.theme
+    }));
+
+    console.log('✅ Found', total, 'published memorials, returning', paginatedMemorials.length);
+
+    return c.json({
+      memorials: transformedMemorials,
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: offset + limit < total
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching public memorials:', error);
+    return c.json({
+      error: 'Failed to fetch memorials',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
 // =============================================================================
 // PROTECTED ROUTES (Authentication required)
 // =============================================================================
@@ -1064,88 +1148,6 @@ memorialsApp.post('/generate-preview-pdf', authMiddleware, async (c) => {
 });
 
 
-// Get all public memorials with search and filters
-memorialsApp.get('/public', async (c) => {
-  try {
-    // Get query parameters
-    const searchQuery = c.req.query('search')?.toLowerCase() || '';
-    const sortBy = c.req.query('sortBy') || 'recent'; // recent, oldest, name
-    const limit = parseInt(c.req.query('limit') || '50');
-    const offset = parseInt(c.req.query('offset') || '0');
 
-    console.log('🔍 Public memorials search:', { searchQuery, sortBy, limit, offset });
-
-    // Get all published memorials
-    let query = db
-      .select()
-      .from(memorials)
-      .where(eq(memorials.isPublished, true));
-
-    // Fetch all results first for filtering
-    const allMemorials = await query;
-
-    // Filter by search query if provided
-    let filteredMemorials = allMemorials;
-    if (searchQuery) {
-      filteredMemorials = allMemorials.filter(memorial => {
-        const nameMatch = memorial.name?.toLowerCase().includes(searchQuery);
-        const locationMatch = memorial.location?.toLowerCase().includes(searchQuery);
-        const obituaryMatch = memorial.obituary?.toLowerCase().includes(searchQuery);
-        
-        return nameMatch || locationMatch || obituaryMatch;
-      });
-    }
-
-    // Sort memorials
-    filteredMemorials.sort((a, b) => {
-      switch (sortBy) {
-        case 'oldest':
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        case 'name':
-          return (a.name || '').localeCompare(b.name || '');
-        case 'recent':
-        default:
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      }
-    });
-
-    // Apply pagination
-    const total = filteredMemorials.length;
-    const paginatedMemorials = filteredMemorials.slice(offset, offset + limit);
-
-    // Transform memorials for frontend
-    const transformedMemorials = paginatedMemorials.map(memorial => ({
-      id: memorial.id,
-      name: memorial.name,
-      profileImage: memorial.profileImage,
-      birthDate: memorial.birthDate,
-      deathDate: memorial.deathDate,
-      location: memorial.location,
-      obituary: memorial.obituary ? memorial.obituary.substring(0, 150) + '...' : '',
-      customUrl: memorial.customUrl,
-      createdAt: memorial.createdAt,
-      theme: memorial.theme
-    }));
-
-    console.log('✅ Found', total, 'published memorials, returning', paginatedMemorials.length);
-
-    return c.json({
-      memorials: transformedMemorials,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + limit < total
-      }
-    });
-
-  } catch (error) {
-    console.error('❌ Error fetching public memorials:', error);
-    return c.json({
-      error: 'Failed to fetch memorials',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, 500);
-  }
-});
 
 export { memorialsApp };
