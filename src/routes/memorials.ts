@@ -1147,7 +1147,45 @@ memorialsApp.post('/generate-preview-pdf', authMiddleware, async (c) => {
   }
 });
 
+// Add this DELETE endpoint (put it near other routes)
+memorialsApp.delete('/:id', authMiddleware, async (c) => {
+  const userId = c.get('userId');
+  const memorialId = c.req.param('id');
 
+  try {
+    // First verify the memorial belongs to the user
+    const [memorial] = await db
+      .select()
+      .from(memorials)
+      .where(eq(memorials.id, memorialId));
 
+    if (!memorial || memorial.userId !== userId) {
+      return c.json({ error: 'Memorial not found' }, 404);
+    }
+
+    // First delete associated memories
+    await db
+      .delete(memories)
+      .where(eq(memories.memorialId, memorialId));
+
+    // Then delete the memorial
+    await db
+      .delete(memorials)
+      .where(eq(memorials.id, memorialId));
+
+    console.log(`✅ Memorial ${memorialId} deleted successfully`);
+
+    return c.json({ 
+      success: true, 
+      message: 'Memorial deleted successfully' 
+    });
+  } catch (error) {
+    console.error('❌ Delete memorial error:', error);
+    return c.json({ 
+      error: 'Failed to delete memorial',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
 
 export { memorialsApp };
