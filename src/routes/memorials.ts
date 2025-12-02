@@ -1187,5 +1187,284 @@ memorialsApp.delete('/:id', authMiddleware, async (c) => {
     }, 500);
   }
 });
+//editing and adding tributes
+// backend/routes/memorials.ts - ADD THESE NEW ROUTES
+
+// Helper function for relative time
+function getRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return 'just now';
+  if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+  }
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+  }
+  if (diffInSeconds < 2592000) {
+    const days = Math.floor(diffInSeconds / 86400);
+    return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+  }
+  if (diffInSeconds < 31536000) {
+    const months = Math.floor(diffInSeconds / 2592000);
+    return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+  }
+  const years = Math.floor(diffInSeconds / 31536000);
+  return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+}
+
+// NEW ROUTE: Add public tribute (no auth required)
+memorialsApp.post('/public/:identifier/tributes', async (c) => {
+  const rawIdentifier = c.req.param('identifier');
+  const identifier = cleanMemorialIdentifier(rawIdentifier);
+  const body = await c.req.json();
+
+  console.log('💐 Public tribute submission for:', identifier);
+
+  try {
+    // Validate required fields
+    if (!body.authorName || !body.message) {
+      return c.json({ 
+        error: 'Author name and message are required' 
+      }, 400);
+    }
+
+    // Find memorial by ID or customUrl
+    let memorial = null;
+    try {
+      const [memorialById] = await db
+        .select()
+        .from(memorials)
+        .where(eq(memorials.id, identifier));
+      if (memorialById) memorial = memorialById;
+    } catch (error) {
+      console.log('Trying customUrl...');
+    }
+
+    if (!memorial) {
+      try {
+        const [memorialByUrl] = await db
+          .select()
+          .from(memorials)
+          .where(eq(memorials.customUrl, identifier));
+        if (memorialByUrl) memorial = memorialByUrl;
+      } catch (error) {
+        console.log('CustomUrl search failed');
+      }
+    }
+
+    if (!memorial) {
+      return c.json({ error: 'Memorial not found' }, 404);
+    }
+
+    // Check if memorial allows public tributes (you can add this field to schema)
+    if (!memorial.isPublished) {
+      return c.json({ 
+        error: 'This memorial is not accepting tributes' 
+      }, 403);
+    }
+
+    // Create new tribute
+    const newTribute = {
+      id: crypto.randomUUID(),
+      authorName: body.authorName,
+      authorLocation: body.authorLocation || '', // e.g., "Nairobi, Kenya"
+      message: body.message,
+      authorImage: body.authorImage || '', // optional profile image
+      createdAt: new Date().toISOString(),
+      isPublic: true
+    };
+
+    // Get current memoryWall/tributes
+    const currentTributes = Array.isArray(memorial.memoryWall) 
+      ? memorial.memoryWall 
+      : [];
+
+    // Add new tribute
+    const updatedTributes = [...currentTributes, newTribute];
+
+    // Update memorial with new tribute
+    const [updatedMemorial] = await db
+      .update(memorials)
+      .set({
+        memoryWall: updatedTributes,
+        updatedAt: new Date()
+      })
+      .where(eq(memorials.id, memorial.id))
+      .returning();
+
+    console.log('✅ Public tribute added successfully');
+
+    // Return the new tribute with relative time
+    return c.json({
+      success: true,
+      tribute: {
+        ...newTribute,
+        relativeTime: getRelativeTime(new Date(newTribute.createdAt))
+      }
+    }, 201);
+
+  } catch (error) {
+    console.error('❌ Error adding public tribute:', error);
+    return c.json({ 
+      error: 'Failed to add tribute',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// NEW ROUTE: Get public tributes with relative time
+memorialsApp.get('/public/:identifier/tributes', async (c) => {
+  const rawIdentifier = c.req.param('identifier');
+  const identifier = cleanMemorialIdentifier(rawIdentifier);
+
+  try {
+    // Find memorial
+    let memorial = null;
+    try {
+      const [memorialById] = await db
+        .select()
+        .from(memorials)
+        .where(eq(memorials.id, identifier));
+      if (memorialById) memorial = memorialById;
+    } catch (error) {
+      console.log('Trying customUrl...');
+    }
+
+    if (!memorial) {
+      try {
+        const [memorialByUrl] = await db
+          .select()
+          .from(memorials)
+          .where(eq(memorials.customUrl, identifier));
+        if (memorialByUrl) memorial = memorialByUrl;
+      } catch (error) {
+        console.log('CustomUrl search failed');
+      }
+    }
+
+    if (!memorial) {
+      return c.json({ error: 'Memorial not found' }, 404);
+    }
+
+    // Get tributes and add relative time
+    const tributes = Array.isArray(memorial.memoryWall) 
+      ? memorial.memoryWall 
+      : [];
+
+    const tributesWithRelativeTime = tributes.map((tribute: any) => ({
+      ...tribute,
+      relativeTime: getRelativeTime(new Date(tribute.createdAt || new Date()))
+    }));
+
+    return c.json({ 
+      tributes: tributesWithRelativeTime,
+      total: tributesWithRelativeTime.length
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching tributes:', error);
+    return c.json({ 
+      error: 'Failed to fetch tributes',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// UPDATED: Modify the public memorial route to include relative times
+memorialsApp.get('/public/:identifier', async (c) => {
+  const rawIdentifier = c.req.param('identifier');
+  const identifier = cleanMemorialIdentifier(rawIdentifier);
+
+  console.log('🔍 Public memorial request for:', { raw: rawIdentifier, cleaned: identifier });
+
+  try {
+    let memorial = null;
+
+    // Try to find by ID first
+    try {
+      const [memorialById] = await db
+        .select()
+        .from(memorials)
+        .where(eq(memorials.id, identifier));
+
+      if (memorialById) {
+        memorial = memorialById;
+        console.log('✅ Found by ID:', memorial.id);
+      }
+    } catch (error) {
+      console.log('⚠️ ID search failed, trying customUrl:', error);
+    }
+
+    // If not found by ID, try by customUrl
+    if (!memorial) {
+      try {
+        const [memorialByUrl] = await db
+          .select()
+          .from(memorials)
+          .where(eq(memorials.customUrl, identifier));
+
+        if (memorialByUrl) {
+          memorial = memorialByUrl;
+          console.log('✅ Found by customUrl:', memorial.customUrl);
+        }
+      } catch (error) {
+        console.log('⚠️ CustomUrl search failed:', error);
+      }
+    }
+
+    if (!memorial) {
+      console.log('❌ Memorial not found:', identifier);
+      return c.json({ 
+        error: 'Memorial not found',
+        details: `No memorial found with identifier: ${identifier}`
+      }, 404);
+    }
+
+    // Get memories for this memorial
+    const memorialMemories = await db
+      .select()
+      .from(memories)
+      .where(eq(memories.memorialId, memorial.id));
+
+    // Parse service info with proper typing
+    const serviceInfo = memorial.serviceInfo as ServiceInfo || {};
+
+    // Add relative time to tributes
+    const memoryWall = Array.isArray(memorial.memoryWall) 
+      ? memorial.memoryWall.map((tribute: any) => ({
+          ...tribute,
+          relativeTime: getRelativeTime(new Date(tribute.createdAt || new Date()))
+        }))
+      : [];
+
+    // Return complete memorial data with relative times
+    const transformedMemorial = {
+      ...memorial,
+      service: serviceInfo,
+      serviceInfo: serviceInfo,
+      timeline: memorial.timeline || [],
+      favorites: memorial.favorites || [],
+      familyTree: memorial.familyTree || [],
+      gallery: memorial.gallery || [],
+      memoryWall: memoryWall,
+      tributes: memoryWall,
+      memories: memorialMemories || []
+    };
+
+    console.log('✅ Returning memorial data with relative times');
+
+    return c.json({ memorial: transformedMemorial });
+  } catch (error) {
+    console.error('❌ Error fetching public memorial:', error);
+    return c.json({ 
+      error: 'Failed to fetch memorial',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
 
 export { memorialsApp };
