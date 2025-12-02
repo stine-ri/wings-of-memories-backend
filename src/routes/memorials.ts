@@ -9,6 +9,7 @@ import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 import { generateMemorialHTML } from '../utils/pdfTemplate.js';
 import { inArray } from 'drizzle-orm';
+import sharp from 'sharp';
 
 const memorialsApp = new Hono();
 
@@ -20,6 +21,109 @@ interface ServiceInfo {
   time?: string;
   virtualLink?: string;
   virtualPlatform?: string;
+}
+// Helper function to optimize images before PDF generation
+async function optimizeImageUrl(imageUrl: string): Promise<string> {
+  try {
+    // Skip if already optimized or is a data URL
+    if (imageUrl.startsWith('data:image')) {
+      return imageUrl;
+    }
+
+    console.log('🖼️ Optimizing image:', imageUrl.substring(0, 50) + '...');
+
+    // Fetch the image
+    const response = await fetch(imageUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; MemorialPDFBot/1.0)'
+      },
+      signal: AbortSignal.timeout(5000) // 5s timeout per image
+    });
+
+    if (!response.ok) {
+      console.warn('⚠️ Failed to fetch image, using original URL');
+      return imageUrl;
+    }
+
+    const buffer = await response.arrayBuffer();
+
+    // Compress and resize image
+    const optimizedBuffer = await sharp(Buffer.from(buffer))
+      .resize(1200, 1200, { 
+        fit: 'inside', 
+        withoutEnlargement: true 
+      })
+      .jpeg({ 
+        quality: 80, 
+        progressive: true 
+      })
+      .toBuffer();
+
+    // Convert to base64 data URL
+    const base64 = optimizedBuffer.toString('base64');
+    return `data:image/jpeg;base64,${base64}`;
+
+  } catch (error) {
+    console.warn('⚠️ Image optimization failed:', error);
+    return imageUrl; // Fallback to original URL
+  }
+}
+
+// Helper to optimize all images in memorial data
+async function optimizeMemorialImages(memorial: any): Promise<any> {
+  const optimized = { ...memorial };
+
+  try {
+    // Optimize profile image
+    if (optimized.profileImage && optimized.profileImage.startsWith('http')) {
+      optimized.profileImage = await optimizeImageUrl(optimized.profileImage);
+    }
+
+    // Optimize gallery images (limit to first 20 to avoid timeout)
+    if (Array.isArray(optimized.gallery)) {
+      console.log(`🖼️ Optimizing ${Math.min(optimized.gallery.length, 20)} gallery images...`);
+      const galleryToOptimize = optimized.gallery.slice(0, 20);
+      optimized.gallery = await Promise.all(
+        galleryToOptimize.map(async (item: any) => {
+          if (item.url && item.url.startsWith('http')) {
+            return { ...item, url: await optimizeImageUrl(item.url) };
+          }
+          return item;
+        })
+      );
+    }
+
+    // Optimize timeline images
+    if (Array.isArray(optimized.timeline)) {
+      optimized.timeline = await Promise.all(
+        optimized.timeline.map(async (event: any) => {
+          if (event.image && event.image.startsWith('http')) {
+            return { ...event, image: await optimizeImageUrl(event.image) };
+          }
+          return event;
+        })
+      );
+    }
+
+    // Optimize family tree photos
+    if (Array.isArray(optimized.familyTree)) {
+      optimized.familyTree = await Promise.all(
+        optimized.familyTree.map(async (member: any) => {
+          if (member.photo && member.photo.startsWith('http')) {
+            return { ...member, photo: await optimizeImageUrl(member.photo) };
+          }
+          return member;
+        })
+      );
+    }
+
+    console.log('✅ Image optimization complete');
+    return optimized;
+
+  } catch (error) {
+    console.error('❌ Image optimization error:', error);
+    return memorial; // Return original if optimization fails
+  }
 }
 
 // Helper function to ensure complete memorial data
@@ -193,6 +297,7 @@ async function generatePDFResponse(c: any, memorial: any) {
     }
   }
 }
+
 
 // =============================================================================
 // PUBLIC ROUTES (No authentication required)
