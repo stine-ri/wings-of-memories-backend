@@ -3,7 +3,7 @@
 import { Hono } from 'hono';
 import { db } from '../drizzle/db.js';
 import { memorials, memories, users } from '../drizzle/schema.js';
-import { eq, desc, or } from 'drizzle-orm';
+import { eq, desc, or , sql} from 'drizzle-orm';
 import { authMiddleware } from '../middleware/bearAuth.js';
 import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
@@ -298,6 +298,40 @@ async function generatePDFResponse(c: any, memorial: any) {
   }
 }
 
+// Helper function to parse family tree data
+function parseFamilyTreeData(familyTreeData: any): any[] {
+  if (!familyTreeData) return [];
+  
+  // If it's already an array, return it
+  if (Array.isArray(familyTreeData)) {
+    return familyTreeData;
+  }
+  
+  // If it's a string, try to parse it as JSON
+  if (typeof familyTreeData === 'string') {
+    try {
+      // Clean the string if needed (remove extra quotes, etc.)
+      let cleanString = familyTreeData.trim();
+      if (cleanString.startsWith('"') && cleanString.endsWith('"')) {
+        cleanString = cleanString.slice(1, -1);
+      }
+      
+      const parsed = JSON.parse(cleanString);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error('❌ Failed to parse familyTree string:', error);
+      console.error('String value:', familyTreeData);
+      return [];
+    }
+  }
+  
+  // If it's an object (but not array), wrap it
+  if (typeof familyTreeData === 'object' && familyTreeData !== null && !Array.isArray(familyTreeData)) {
+    return [familyTreeData];
+  }
+  
+  return [];
+}
 
 // =============================================================================
 // PUBLIC ROUTES (No authentication required)
@@ -313,6 +347,7 @@ function cleanMemorialIdentifier(identifier: string): string {
 }
 
 // ✅ FIXED: Public memorial route with proper identifier handling
+// ✅ FIXED: Public memorial route with proper family tree parsing
 memorialsApp.get('/public/:identifier', async (c) => {
   const rawIdentifier = c.req.param('identifier');
   const identifier = cleanMemorialIdentifier(rawIdentifier);
@@ -354,7 +389,6 @@ memorialsApp.get('/public/:identifier', async (c) => {
       }
     }
 
-    // Not found at all
     if (!memorial) {
       console.log('❌ Memorial not found:', identifier);
       return c.json({ 
@@ -363,12 +397,16 @@ memorialsApp.get('/public/:identifier', async (c) => {
       }, 404);
     }
 
-    // Check if published (optional - commented out to allow unpublished access)
-    if (!memorial.isPublished) {
-      console.log('⚠️ Memorial not published:', identifier);
-      // Uncomment next line if you want to restrict unpublished memorials
-      // return c.json({ error: 'Memorial is not published' }, 403);
-    }
+    // ✅ CRITICAL FIX: Parse family tree data
+    const familyTreeData = parseFamilyTreeData(memorial.familyTree);
+    
+    console.log('✅ Family tree parsing:', {
+      rawType: typeof memorial.familyTree,
+      rawIsArray: Array.isArray(memorial.familyTree),
+      rawValue: memorial.familyTree,
+      parsedLength: familyTreeData.length,
+      parsedFirstItem: familyTreeData[0]
+    });
 
     // Get memories for this memorial
     const memorialMemories = await db
@@ -376,31 +414,49 @@ memorialsApp.get('/public/:identifier', async (c) => {
       .from(memories)
       .where(eq(memories.memorialId, memorial.id));
 
-    // Parse service info with proper typing
-    const serviceInfo = memorial.serviceInfo as ServiceInfo || {};
+    // Parse service info
+    const serviceInfo = memorial.serviceInfo || {};
+
+    // Add relative time to tributes
+    const memoryWall = Array.isArray(memorial.memoryWall) 
+      ? memorial.memoryWall.map((tribute: any) => ({
+          ...tribute,
+          relativeTime: getRelativeTime(new Date(tribute.createdAt || new Date()))
+        }))
+      : [];
 
     // Return complete memorial data
     const transformedMemorial = {
       ...memorial,
       service: serviceInfo,
       serviceInfo: serviceInfo,
-      timeline: memorial.timeline || [],
-      favorites: memorial.favorites || [],
-      familyTree: memorial.familyTree || [],
-      gallery: memorial.gallery || [],
-      memoryWall: memorial.memoryWall || [],
-      tributes: memorial.memoryWall || [],
+      timeline: Array.isArray(memorial.timeline) ? memorial.timeline : [],
+      favorites: Array.isArray(memorial.favorites) ? memorial.favorites : [],
+      familyTree: familyTreeData, // ✅ Use properly parsed data
+      gallery: Array.isArray(memorial.gallery) ? memorial.gallery : [],
+      memoryWall: memoryWall,
+      tributes: memoryWall,
       memories: memorialMemories || []
     };
 
-    console.log('✅ Returning memorial data:', {
-      id: transformedMemorial.id,
+    console.log('✅ Returning memorial with:', {
       name: transformedMemorial.name,
-      customUrl: transformedMemorial.customUrl,
-      isPublished: transformedMemorial.isPublished
+      familyTreeMembers: transformedMemorial.familyTree.length,
+      timelineEvents: transformedMemorial.timeline.length,
+      galleryImages: transformedMemorial.gallery.length,
+      tributes: transformedMemorial.tributes.length
     });
 
-    return c.json({ memorial: transformedMemorial });
+    return c.json({ 
+      memorial: transformedMemorial,
+      _debug: {
+        familyTree: {
+          parsedCount: familyTreeData.length,
+          members: familyTreeData.map(m => ({ id: m.id, name: m.name, relation: m.relation }))
+        }
+      }
+    });
+
   } catch (error) {
     console.error('❌ Error fetching public memorial:', error);
     return c.json({ 
@@ -409,7 +465,84 @@ memorialsApp.get('/public/:identifier', async (c) => {
     }, 500);
   }
 });
+// Test endpoint for family tree debugging
+memorialsApp.get('/debug/family-tree/:identifier', async (c) => {
+  const rawIdentifier = c.req.param('identifier');
+  const identifier = cleanMemorialIdentifier(rawIdentifier);
 
+  try {
+    let memorial = null;
+
+    // Try by ID
+    try {
+      const [memorialById] = await db
+        .select({
+          id: memorials.id,
+          name: memorials.name,
+          familyTreeRaw: memorials.familyTree,
+          familyTreeType: sql<string>`pg_typeof(${memorials.familyTree})`.as('type')
+        })
+        .from(memorials)
+        .where(eq(memorials.id, identifier));
+
+      if (memorialById) memorial = memorialById;
+    } catch (error) {
+      console.log('ID search failed');
+    }
+
+    // Try by customUrl
+    if (!memorial) {
+      try {
+        const [memorialByUrl] = await db
+          .select({
+            id: memorials.id,
+            name: memorials.name,
+            familyTreeRaw: memorials.familyTree,
+            familyTreeType: sql<string>`pg_typeof(${memorials.familyTree})`.as('type')
+          })
+          .from(memorials)
+          .where(eq(memorials.customUrl, identifier));
+
+        if (memorialByUrl) memorial = memorialByUrl;
+      } catch (error) {
+        console.log('CustomUrl search failed');
+      }
+    }
+
+    if (!memorial) {
+      return c.json({ error: 'Memorial not found' }, 404);
+    }
+
+    // Parse the data
+    const parsedFamilyTree = parseFamilyTreeData(memorial.familyTreeRaw);
+
+    return c.json({
+      success: true,
+      memorial: {
+        id: memorial.id,
+        name: memorial.name
+      },
+      familyTree: {
+        raw: memorial.familyTreeRaw,
+        rawType: memorial.familyTreeType,
+        parsed: parsedFamilyTree,
+        parsedCount: parsedFamilyTree.length,
+        parsedMembers: parsedFamilyTree.map(m => ({
+          id: m.id,
+          name: m.name,
+          relation: m.relation,
+          image: m.image ? 'has image' : 'no image'
+        }))
+      }
+    });
+
+  } catch (error) {
+    console.error('Debug error:', error);
+    return c.json({ 
+      error: error instanceof Error ? error.message : String(error)
+    }, 500);
+  }
+});
 // ✅ FIXED: Get memorial for PDF preview with proper identifier handling
 memorialsApp.get('/:id/pdf-data', async (c) => {
   const rawId = c.req.param('id');
