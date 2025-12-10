@@ -1763,5 +1763,58 @@ memorialsApp.get('/public/:identifier', async (c) => {
     }, 500);
   }
 });
+// Add this debug endpoint to check raw family tree data
+memorialsApp.get('/debug/:identifier/family-tree', async (c) => {
+  const rawIdentifier = c.req.param('identifier');
+  const identifier = cleanMemorialIdentifier(rawIdentifier);
 
+  try {
+    let memorial = null;
+
+    // Try by ID
+    try {
+      const [memorialById] = await db
+        .select()
+        .from(memorials)
+        .where(eq(memorials.id, identifier));
+      if (memorialById) memorial = memorialById;
+    } catch (error) {
+      console.log('ID search failed');
+    }
+
+    // Try by customUrl
+    if (!memorial) {
+      try {
+        const [memorialByUrl] = await db
+          .select()
+          .from(memorials)
+          .where(eq(memorials.customUrl, identifier));
+        if (memorialByUrl) memorial = memorialByUrl;
+      } catch (error) {
+        console.log('CustomUrl search failed');
+      }
+    }
+
+    if (!memorial) {
+      return c.json({ error: 'Memorial not found' }, 404);
+    }
+
+    console.log('🔍 RAW familyTree field from DB:', {
+      type: typeof memorial.familyTree,
+      isArray: Array.isArray(memorial.familyTree),
+      value: memorial.familyTree,
+      stringified: JSON.stringify(memorial.familyTree)
+    });
+
+    return c.json({
+      memorialId: memorial.id,
+      familyTree: memorial.familyTree,
+      familyTreeType: typeof memorial.familyTree,
+      familyTreeLength: Array.isArray(memorial.familyTree) ? memorial.familyTree.length : 'Not array'
+    });
+  } catch (error) {
+    console.error('Debug error:', error);
+    return c.json({ error: 'Debug failed' }, 500);
+  }
+});
 export { memorialsApp };
