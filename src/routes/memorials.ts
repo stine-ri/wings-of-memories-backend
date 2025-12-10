@@ -1322,12 +1322,14 @@ function getRelativeTime(date: Date): string {
 }
 
 // NEW ROUTE: Add public tribute (no auth required)
+// backend/routes/memorials.ts - Update the public tribute route
+
 memorialsApp.post('/public/:identifier/tributes', async (c) => {
   const rawIdentifier = c.req.param('identifier');
   const identifier = cleanMemorialIdentifier(rawIdentifier);
   const body = await c.req.json();
 
-  console.log('💐 Public tribute submission for:', identifier);
+  console.log('💐 Public tribute submission for:', identifier, 'sessionId:', body.sessionId);
 
   try {
     // Validate required fields
@@ -1365,22 +1367,24 @@ memorialsApp.post('/public/:identifier/tributes', async (c) => {
       return c.json({ error: 'Memorial not found' }, 404);
     }
 
-    // Check if memorial allows public tributes (you can add this field to schema)
+    // Check if memorial allows public tributes
     if (!memorial.isPublished) {
       return c.json({ 
         error: 'This memorial is not accepting tributes' 
       }, 403);
     }
 
-    // Create new tribute
+    // Create new tribute WITH sessionId
     const newTribute = {
       id: crypto.randomUUID(),
       authorName: body.authorName,
-      authorLocation: body.authorLocation || '', // e.g., "Nairobi, Kenya"
+      authorLocation: body.authorLocation || '',
       message: body.message,
-      authorImage: body.authorImage || '', // optional profile image
+      authorImage: body.authorImage || '',
       createdAt: new Date().toISOString(),
-      isPublic: true
+      isPublic: true,
+      sessionId: body.sessionId || null, // Store the session ID
+      isAnonymous: body.authorName === 'Anonymous'
     };
 
     // Get current memoryWall/tributes
@@ -1401,7 +1405,7 @@ memorialsApp.post('/public/:identifier/tributes', async (c) => {
       .where(eq(memorials.id, memorial.id))
       .returning();
 
-    console.log('✅ Public tribute added successfully');
+    console.log('✅ Public tribute added with sessionId:', newTribute.sessionId);
 
     // Return the new tribute with relative time
     return c.json({
@@ -1416,6 +1420,194 @@ memorialsApp.post('/public/:identifier/tributes', async (c) => {
     console.error('❌ Error adding public tribute:', error);
     return c.json({ 
       error: 'Failed to add tribute',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// Add new endpoints for editing and deleting tributes with session validation
+memorialsApp.put('/public/:identifier/tributes/:tributeId', async (c) => {
+  const rawIdentifier = c.req.param('identifier');
+  const identifier = cleanMemorialIdentifier(rawIdentifier);
+  const tributeId = c.req.param('tributeId');
+  const body = await c.req.json();
+
+  console.log('✏️ Editing tribute:', { identifier, tributeId, sessionId: body.sessionId });
+
+  try {
+    // Find memorial
+    let memorial = null;
+    try {
+      const [memorialById] = await db
+        .select()
+        .from(memorials)
+        .where(eq(memorials.id, identifier));
+      if (memorialById) memorial = memorialById;
+    } catch (error) {
+      console.log('Trying customUrl...');
+    }
+
+    if (!memorial) {
+      try {
+        const [memorialByUrl] = await db
+          .select()
+          .from(memorials)
+          .where(eq(memorials.customUrl, identifier));
+        if (memorialByUrl) memorial = memorialByUrl;
+      } catch (error) {
+        console.log('CustomUrl search failed');
+      }
+    }
+
+    if (!memorial) {
+      return c.json({ error: 'Memorial not found' }, 404);
+    }
+
+    // Get current tributes
+    const currentTributes = Array.isArray(memorial.memoryWall) 
+      ? memorial.memoryWall 
+      : [];
+
+    // Find the tribute to edit
+    const tributeIndex = currentTributes.findIndex((t: any) => t.id === tributeId);
+    if (tributeIndex === -1) {
+      return c.json({ error: 'Tribute not found' }, 404);
+    }
+
+    const tribute = currentTributes[tributeIndex];
+
+    // Verify session ID matches (only creator can edit)
+    if (tribute.sessionId !== body.sessionId) {
+      return c.json({ 
+        error: 'Unauthorized to edit this tribute',
+        details: 'Session ID does not match'
+      }, 403);
+    }
+
+    // Update the tribute
+    const updatedTribute = {
+      ...tribute,
+      authorName: body.authorName || tribute.authorName,
+      authorLocation: body.authorLocation || tribute.authorLocation,
+      message: body.message || tribute.message,
+      authorImage: body.authorImage || tribute.authorImage,
+      updatedAt: new Date().toISOString()
+    };
+
+    // Replace in array
+    currentTributes[tributeIndex] = updatedTribute;
+
+    // Update memorial
+    const [updatedMemorial] = await db
+      .update(memorials)
+      .set({
+        memoryWall: currentTributes,
+        updatedAt: new Date()
+      })
+      .where(eq(memorials.id, memorial.id))
+      .returning();
+
+    console.log('✅ Tribute updated successfully');
+
+    return c.json({
+      success: true,
+      tribute: {
+        ...updatedTribute,
+        relativeTime: getRelativeTime(new Date(updatedTribute.createdAt || new Date()))
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error editing tribute:', error);
+    return c.json({ 
+      error: 'Failed to edit tribute',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+memorialsApp.delete('/public/:identifier/tributes/:tributeId', async (c) => {
+  const rawIdentifier = c.req.param('identifier');
+  const identifier = cleanMemorialIdentifier(rawIdentifier);
+  const tributeId = c.req.param('tributeId');
+  const body = await c.req.json();
+
+  console.log('🗑️ Deleting tribute:', { identifier, tributeId, sessionId: body.sessionId });
+
+  try {
+    // Find memorial
+    let memorial = null;
+    try {
+      const [memorialById] = await db
+        .select()
+        .from(memorials)
+        .where(eq(memorials.id, identifier));
+      if (memorialById) memorial = memorialById;
+    } catch (error) {
+      console.log('Trying customUrl...');
+    }
+
+    if (!memorial) {
+      try {
+        const [memorialByUrl] = await db
+          .select()
+          .from(memorials)
+          .where(eq(memorials.customUrl, identifier));
+        if (memorialByUrl) memorial = memorialByUrl;
+      } catch (error) {
+        console.log('CustomUrl search failed');
+      }
+    }
+
+    if (!memorial) {
+      return c.json({ error: 'Memorial not found' }, 404);
+    }
+
+    // Get current tributes
+    const currentTributes = Array.isArray(memorial.memoryWall) 
+      ? memorial.memoryWall 
+      : [];
+
+    // Find the tribute to delete
+    const tributeIndex = currentTributes.findIndex((t: any) => t.id === tributeId);
+    if (tributeIndex === -1) {
+      return c.json({ error: 'Tribute not found' }, 404);
+    }
+
+    const tribute = currentTributes[tributeIndex];
+
+    // Verify session ID matches (only creator can delete)
+    if (tribute.sessionId !== body.sessionId) {
+      return c.json({ 
+        error: 'Unauthorized to delete this tribute',
+        details: 'Session ID does not match'
+      }, 403);
+    }
+
+    // Remove from array
+    currentTributes.splice(tributeIndex, 1);
+
+    // Update memorial
+    const [updatedMemorial] = await db
+      .update(memorials)
+      .set({
+        memoryWall: currentTributes,
+        updatedAt: new Date()
+      })
+      .where(eq(memorials.id, memorial.id))
+      .returning();
+
+    console.log('✅ Tribute deleted successfully');
+
+    return c.json({
+      success: true,
+      message: 'Tribute deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('❌ Error deleting tribute:', error);
+    return c.json({ 
+      error: 'Failed to delete tribute',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, 500);
   }
