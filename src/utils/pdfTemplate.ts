@@ -43,7 +43,7 @@ export function generateMemorialHTML(memorialData: any): string {
       return '';
     }
   };
-  
+
 console.log('🖼️ PDF GALLERY DATA DEBUG:');
 console.log('Gallery array length:', gallery.length);
 if (gallery.length > 0) {
@@ -682,19 +682,21 @@ if (gallery.length > 0) {
       margin-bottom: 2.5rem;
     }
 
-    .gallery-item {
-      aspect-ratio: 1;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.12);
-      background: white;
-      padding: 1rem;
-      border: 2px solid var(--warm-cream);
-    }
+.gallery-item {
+  aspect-ratio: 1;
+  border-radius: 16px;
+  overflow: visible; /* Changed from hidden to visible so captions can show */
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.12);
+  background: white;
+  padding: 1rem;
+  border: 2px solid var(--warm-cream);
+  display: flex;
+  flex-direction: column;
+}
 
     .gallery-image {
       width: 100%;
-      height: 100%;
+      height: 80%;
       object-fit: cover;
       border-radius: 12px;
     }
@@ -740,15 +742,20 @@ if (gallery.length > 0) {
       font-size: 0.8rem;
     }
 
-    .gallery-caption {
-      margin-top: 1rem;
-      text-align: center;
-      font-size: 0.9rem;
-      color: var(--soft-text);
-      line-height: 1.5;
-      padding: 0 0.5rem;
-      font-style: italic;
-    }
+  .gallery-caption {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--deep-blue); 
+  line-height: 1.6;
+  padding: 0.5rem;
+  font-style: italic;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  margin: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
 
     /* MEMORIES SECTION */
     .memories-section {
