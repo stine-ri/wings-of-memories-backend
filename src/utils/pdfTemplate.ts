@@ -1105,12 +1105,18 @@ export function generateMemorialHTML(memorialData: any): string {
                     <div class="gallery-item">
                       <img 
                         src="${img.url || img}" 
-                        alt="${img.caption || img.alt || `Memory ${index + 1}`}"
+                        alt="${img.caption || img.description || img.alt || img.title || `Memory ${index + 1}`}"
                         class="gallery-image"
                       />
-                      ${img.caption || img.description || img.alt || img.title ? `
-  <div class="gallery-caption">${img.caption || img.description || img.alt || img.title}</div>
-` : ''}
+       ${(() => {
+  // Get the description from any field
+  const description = img.caption || img.description || img.alt || img.title;
+  // Only show if we have something
+  if (description && description.trim() !== '') {
+    return `<div class="gallery-caption">${description}</div>`;
+  }
+  return '';
+})()}
                       ${img.uploadedAt ? `
                         <div style="
                           text-align: center;
