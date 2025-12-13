@@ -44,7 +44,6 @@ export function generateMemorialHTML(memorialData: any): string {
     }
   };
 
-
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -674,21 +673,19 @@ export function generateMemorialHTML(memorialData: any): string {
       margin-bottom: 2.5rem;
     }
 
-.gallery-item {
-  aspect-ratio: 1;
-  border-radius: 16px;
-  overflow: visible; /* Changed from hidden to visible so captions can show */
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.12);
-  background: white;
-  padding: 1rem;
-  border: 2px solid var(--warm-cream);
-  display: flex;
-  flex-direction: column;
-}
+    .gallery-item {
+      aspect-ratio: 1;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.12);
+      background: white;
+      padding: 1rem;
+      border: 2px solid var(--warm-cream);
+    }
 
     .gallery-image {
       width: 100%;
-      height: 80%;
+      height: 100%;
       object-fit: cover;
       border-radius: 12px;
     }
@@ -734,20 +731,15 @@ export function generateMemorialHTML(memorialData: any): string {
       font-size: 0.8rem;
     }
 
-  .gallery-caption {
-  margin-top: 1rem;
-  text-align: center;
-  font-size: 0.95rem;
-  color: var(--deep-blue); 
-  line-height: 1.6;
-  padding: 0.5rem;
-  font-style: italic;
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 8px;
-  margin: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+    .gallery-caption {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--soft-text);
+      line-height: 1.5;
+      padding: 0 0.5rem;
+      font-style: italic;
+    }
 
     /* MEMORIES SECTION */
     .memories-section {
@@ -1113,18 +1105,12 @@ export function generateMemorialHTML(memorialData: any): string {
                     <div class="gallery-item">
                       <img 
                         src="${img.url || img}" 
-                        alt="${img.caption || img.description || img.alt || img.title || `Memory ${index + 1}`}"
+                        alt="${img.caption || img.alt || `Memory ${index + 1}`}"
                         class="gallery-image"
                       />
-       ${(() => {
-  // Get the description from any field
-  const description = img.caption || img.description || img.alt || img.title;
-  // Only show if we have something
-  if (description && description.trim() !== '') {
-    return `<div class="gallery-caption">${description}</div>`;
-  }
-  return '';
-})()}
+                      ${img.caption || img.description || img.alt || img.title ? `
+  <div class="gallery-caption">${img.caption || img.description || img.alt || img.title}</div>
+` : ''}
                       ${img.uploadedAt ? `
                         <div style="
                           text-align: center;
