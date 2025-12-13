@@ -1136,30 +1136,6 @@ export function generateMemorialHTML(memorialData: any): string {
     ${memoryWall.length > 0 ? '<div class="section-divider"></div>' : ''}
   ` : ''}
 
-  <!-- MEMORIES SECTION -->
-  ${tributes.length > 0 ? `
-    <div class="content-page ${gallery.length > 0 ? '' : 'page-break'}">
-      <div class="section-header">
-             <h2 class="section-title">Tributes</h2> 
-        <div class="section-subtitle">Words of Love and Remembrance</div>
-      </div>
-      
-      <div class="memories-section">
-        ${memoryWall.map((memory: any) => `
-          <div class="memory-card avoid-break">
-            <div class="memory-text">
-              ${memory.text || memory.message || 'Remembered with love and affection'}
-            </div>
-            <div class="memory-footer">
-              <span class="memory-author">— ${memory.author || memory.authorName || 'Loved One'}</span>
-              <span class="memory-date">${formatDate(memory.date || memory.createdAt)}</span>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-    ${service && (service.venue || service.date || service.virtualLink) ? '<div class="section-divider"></div>' : ''}
-  ` : ''}
 
   <!-- SERVICE SECTION -->
   ${service && (service.venue || service.date || service.virtualLink) ? `
@@ -1215,6 +1191,31 @@ export function generateMemorialHTML(memorialData: any): string {
     </div>
   ` : ''}
 
+  <!-- MEMORIES SECTION -->
+  ${tributes.length > 0 ? `
+    <div class="content-page ${gallery.length > 0 ? '' : 'page-break'}">
+      <div class="section-header">
+             <h2 class="section-title">Tributes</h2> 
+        <div class="section-subtitle">Words of Love and Remembrance</div>
+      </div>
+      
+      <div class="memories-section">
+        ${memoryWall.map((memory: any) => `
+          <div class="memory-card avoid-break">
+            <div class="memory-text">
+              ${memory.text || memory.message || 'Remembered with love and affection'}
+            </div>
+            <div class="memory-footer">
+              <span class="memory-author">— ${memory.author || memory.authorName || 'Loved One'}</span>
+              <span class="memory-date">${formatDate(memory.date || memory.createdAt)}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    ${service && (service.venue || service.date || service.virtualLink) ? '<div class="section-divider"></div>' : ''}
+  ` : ''}
+  
   <!-- FINAL PAGE -->
   <div class="content-page">
     <div class="memorial-footer">
