@@ -43,7 +43,16 @@ export function generateMemorialHTML(memorialData: any): string {
       return '';
     }
   };
-
+  
+console.log('🖼️ PDF GALLERY DATA DEBUG:');
+console.log('Gallery array length:', gallery.length);
+if (gallery.length > 0) {
+  console.log('First image object:', gallery[0]);
+  console.log('First image has caption?', !!gallery[0].caption);
+  console.log('First image has description?', !!gallery[0].description);
+  console.log('First image caption value:', gallery[0].caption);
+  console.log('First image description value:', gallery[0].description);
+}
   return `
 <!DOCTYPE html>
 <html lang="en">
