@@ -271,7 +271,7 @@ async function generatePDFResponse(c: any, memorial: any) {
         bottom: '0',
         left: '0'
       },
-      timeout: 15000,
+      timeout: 60000,
       displayHeaderFooter: false 
     });
 
