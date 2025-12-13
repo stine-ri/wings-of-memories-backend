@@ -979,8 +979,17 @@ memorialsApp.put('/:id', authMiddleware, async (c) => {
       updateData.familyTree = Array.isArray(body.familyTree) ? body.familyTree : [];
     }
     if ('gallery' in body) {
-      updateData.gallery = Array.isArray(body.gallery) ? body.gallery : [];
-    }
+  updateData.gallery = Array.isArray(body.gallery) ? body.gallery.map((img: any) => ({
+    id: img.id || crypto.randomUUID(),
+    url: img.url || '',
+    category: img.category || 'Other Memories',
+    caption: img.caption || img.description || '', // Capture both caption and description
+    description: img.description || img.caption || '', // Ensure description exists
+    alt: img.alt || img.caption || img.description || '',
+    title: img.title || img.caption || img.description || '',
+    uploadedAt: img.uploadedAt || new Date().toISOString()
+  })) : [];
+}
    if ('memoryWall' in body || 'tributes' in body) {
       const tributesData = body.tributes || body.memoryWall || [];
       updateData.memoryWall = Array.isArray(tributesData) ? tributesData : [];

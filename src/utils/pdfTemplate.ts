@@ -1108,9 +1108,9 @@ export function generateMemorialHTML(memorialData: any): string {
                         alt="${img.caption || img.alt || `Memory ${index + 1}`}"
                         class="gallery-image"
                       />
-                      ${img.caption ? `
-                        <div class="gallery-caption">${img.caption}</div>
-                      ` : ''}
+                      ${img.caption || img.description || img.alt || img.title ? `
+  <div class="gallery-caption">${img.caption || img.description || img.alt || img.title}</div>
+` : ''}
                       ${img.uploadedAt ? `
                         <div style="
                           text-align: center;
@@ -1215,7 +1215,7 @@ export function generateMemorialHTML(memorialData: any): string {
     </div>
     ${service && (service.venue || service.date || service.virtualLink) ? '<div class="section-divider"></div>' : ''}
   ` : ''}
-  
+
   <!-- FINAL PAGE -->
   <div class="content-page">
     <div class="memorial-footer">
