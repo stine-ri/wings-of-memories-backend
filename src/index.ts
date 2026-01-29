@@ -14,7 +14,9 @@ app.use('*', async (c, next) => {
     origin: [
       'http://localhost:5173',
       'http://127.0.0.1:5173',
-      'https://wings-of-memory-frontend.vercel.app'
+      'https://wings-of-memory-frontend.vercel.app',
+      'https://4revah.com',
+      'https://www.4revah.com'
     ],
     credentials: true,
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
